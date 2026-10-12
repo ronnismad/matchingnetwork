@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPT Matching Network Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --accent: #ffb347;
+        --accent-soft: rgba(255, 179, 71, 0.10);
+        --accent-border: #7a5525;
+        --bg: #050505;
+        --header-bg: #0d0d0d;
+        --panel: #0d0d0d;
+        --panel-head: #101010;
+        --inset: #000000;
+        --line: #242424;
+        --line-soft: #1d1d1d;
+        --text: #e8e8e8;
+        --muted: #9a9a9a;
+        --dim: #6a6a6a;
+        --orange: #ffb347;
+        --orange-soft: #c9853a;
+        --orange-deep: #7a5525;
+        --fail: #ff7043;
+        --warn: #ffd54f;
+        --ok: #9ccc65;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { color-scheme: dark; }
+
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+        padding: 18px;
+        line-height: 1.45;
+    }
+
+    .container {
+        max-width: 1560px;
+        margin: 0 auto;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+    }
+
+    header {
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        border-radius: 12px 12px 0 0;
+        padding: 16px 20px;
+        margin-bottom: 0;
+    }
+
+    header .title {
+        color: var(--orange);
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    header .ver {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-left: 10px;
+        letter-spacing: 0.04em;
+    }
+
+    header .sub { color: var(--muted); font-size: 0.82rem; margin-top: 4px; }
+
+    header .credit {
+        color: var(--orange-soft);
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        margin-top: 6px;
+    }
+
+    .lang-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+    }
+    .lang-wrap label {
+        margin: 0;
+        color: var(--dim);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    select.lang {
+        appearance: none;
+        background: var(--inset);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 0.82rem;
+        min-width: 110px;
+        cursor: pointer;
+    }
+    select.lang:focus {
+        outline: none;
+        border-color: var(--orange-deep);
+    }
+
+    /* Help modal */
+    .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.72);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+        background: var(--panel);
+        border: 1px solid var(--accent-border);
+        border-radius: 12px;
+        width: min(860px, 100%);
+        max-height: min(86vh, 900px);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+    }
+    .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        color: var(--orange);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 0.86rem;
+    }
+    .modal-head button {
+        width: auto;
+        min-width: 0;
+        padding: 6px 12px;
+        font-size: 0.78rem;
+    }
+    .modal-body {
+        padding: 16px 18px 20px;
+        overflow: auto;
+        color: var(--text);
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+    .modal-body h3 {
+        color: var(--orange);
+        font-size: 0.78rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        margin: 18px 0 8px;
+    }
+    .modal-body h3:first-child { margin-top: 0; }
+    .modal-body p { margin: 0 0 10px; color: var(--muted); }
+    .modal-body ul { margin: 0 0 12px; padding-left: 1.2em; color: var(--muted); }
+    .modal-body li { margin-bottom: 6px; }
+    .modal-body code {
+        font-family: "SFMono-Regular", Consolas, monospace;
+        color: var(--orange);
+        background: var(--inset);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 5px;
+        font-size: 0.84em;
+    }
+    .modal-body .math-block { margin: 8px 0 12px; }
+
+    .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 16px 0;
+    }
+
+    .toolbar button {
+        width: auto;
+        min-width: 160px;
+    }
+
+    .toolbar .hint {
+        color: var(--dim);
+        font-size: 0.78rem;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 400px) 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+    @media (max-width: 1150px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+        background: var(--panel-head);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .card-head {
+        background: transparent;
+        border-bottom: 1px solid var(--line);
+        color: var(--orange);
+        font-weight: 700;
+        font-size: 0.74rem;
+        letter-spacing: 0.075em;
+        text-transform: uppercase;
+        padding: 10px 14px;
+    }
+
+    .card-body { padding: 14px; }
+
+    .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .form-group { margin-bottom: 12px; min-width: 0; }
+
+    label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    input[type="number"] {
+        width: 100%;
+        background: var(--inset);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 0.86rem;
+    }
+
+    input[type="number"]:focus {
+        outline: none;
+        border-color: var(--orange-deep);
+    }
+
+    .checkbox-row {
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 6px; color: var(--text); font-size: 0.84rem;
+    }
+    .checkbox-row input { width: auto; accent-color: var(--orange); }
+
+    button {
+        width: 100%;
+        appearance: none;
+        border: 1px solid var(--orange-deep);
+        border-radius: 8px;
+        padding: 11px 16px;
+        background: linear-gradient(180deg, #2a1d0c, #1a1208);
+        color: var(--orange);
+        font: inherit;
+        font-size: 0.86rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: border-color .15s ease, color .15s ease, background .15s ease;
+    }
+    button:hover {
+        border-color: var(--orange);
+        background: linear-gradient(180deg, #3a2912, #24180c);
+        color: #ffd089;
+    }
+    button:active { transform: translateY(1px); }
+    button.secondary {
+        background: #121212;
+        color: var(--muted);
+        border-color: var(--line);
+        text-transform: none;
+        letter-spacing: 0.02em;
+        font-weight: 600;
+    }
+    button.secondary:hover {
+        color: var(--orange);
+        border-color: var(--orange-deep);
+        background: #1a1208;
+    }
+
+    .result-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+        gap: 8px;
+    }
+
+    .result-item {
+        background: #080808;
+        border: 1px solid var(--line-soft);
+        border-left: 3px solid var(--orange-deep);
+        border-radius: 8px;
+        padding: 9px 10px;
+    }
+
+    .result-label {
+        color: var(--dim);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .result-label.keep { text-transform: none; letter-spacing: 0.03em; }
+
+    .result-value {
+        color: var(--orange);
+        font-weight: 700;
+        font-size: 0.92rem;
+        overflow-wrap: anywhere;
+    }
+    .result-value.warn { color: var(--warn); }
+    .result-value.fail { color: var(--fail); }
+    .result-value.ok { color: var(--ok); }
+
+    .badge {
+        display: inline-block;
+        background: var(--orange-deep);
+        color: #ffd089;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .badge.alt {
+        background: #121212;
+        color: var(--orange);
+        border: 1px solid var(--accent-border);
+    }
+    .badge.stress-ok { background: rgba(156, 204, 101, 0.18); color: var(--ok); border: 1px solid #3d5a28; }
+    .badge.stress-warn { background: rgba(255, 213, 79, 0.14); color: var(--warn); border: 1px solid #6a5a20; }
+    .badge.stress-fail { background: rgba(255, 112, 67, 0.14); color: var(--fail); border: 1px solid #6a3020; }
+
+    .alert { padding: 11px 12px; border-radius: 8px; margin: 8px 0; font-size: 0.86rem; }
+    .alert-info {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent-border);
+        color: var(--orange);
+    }
+    .alert-warning {
+        background: rgba(255, 112, 67, 0.10);
+        border: 1px solid rgba(255, 112, 67, 0.45);
+        color: var(--fail);
+    }
+
+    .math-block {
+        background: var(--inset);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--orange-deep);
+        color: var(--orange);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 0.78rem;
+        padding: 10px 12px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+    }
+
+    table.val-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+        margin: 6px 0 4px;
+    }
+    .val-table th {
+        text-align: left;
+        color: var(--orange-soft);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--accent-border);
+    }
+    .val-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--text);
+    }
+    .val-table td:nth-child(3) { color: var(--orange); font-weight: 700; }
+
+    .svg-wrap {
+        background: var(--inset);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px;
+        overflow-x: auto;
+    }
+
+    svg { width: 100%; min-width: 860px; height: auto; display: block; }
+    svg text { font-family: Inter, "Noto Sans SC", system-ui, sans-serif; }
+
+    .wire { stroke: #8a8a8a; stroke-width: 1.8; fill: none; stroke-linecap: square; }
+    .comp { stroke: var(--orange); stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .dot { fill: var(--orange); }
+    .coupling { stroke: var(--orange-soft); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: 0.95; fill: none; }
+    .lane { fill: none; stroke: #1a1a1a; stroke-width: 1; }
+    .secdiv { stroke: #242424; stroke-width: 1; stroke-dasharray: 3 5; }
+    .slbl { fill: #e8e8e8; font-size: 13px; font-weight: 600; }
+    .sval { fill: var(--orange); font-size: 12px; font-weight: 600; }
+    .stag { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; }
+    .stress { fill: var(--warn); font-size: 11px; font-weight: 600; }
+    .stress.ok { fill: var(--ok); }
+    .stress.warn { fill: var(--warn); }
+    .stress.fail { fill: var(--fail); }
+
+    .legend { color: var(--muted); font-size: 0.8rem; margin-top: 8px; }
+
+    .subhead {
+        color: var(--orange-soft);
+        margin: 16px 0 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.075em;
+        font-size: 0.74rem;
+        font-weight: 700;
+    }
+
+    #errBanner { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="title">WPT Matching Network Designer<span class="ver">V2.4</span></div>
+        <div class="credit" data-i18n="credit">developed by S. Chatterjee</div>
+        <div class="sub" data-i18n="subtitle">Reflected-impedance analysis, exact L-match synthesis, component stress, and compact circuit schematics</div>
+    </header>
+
+    <div class="toolbar">
+        <button id="calcBtn" type="button" data-i18n="btnCalc">Calculate Matching Networks</button>
+        <button id="exportBtn" class="secondary" type="button" data-i18n="btnExport">Export CSV</button>
+        <button id="helpBtn" class="secondary" type="button" data-i18n="btnHelp">Help</button>
+        <span class="hint" data-i18n="hintLive">Inputs recalculate live · Enter also recalculates</span>
+        <div class="lang-wrap">
+            <label for="langSel" data-i18n="langLabel">Language</label>
+            <select id="langSel" class="lang">
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
+                <option value="zh">中文</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="alert alert-warning" id="errBanner"></div>
+
+    <div class="grid">
+        <div>
+            <div class="card">
+                <div class="card-head" data-i18n="cardSystem">System Inputs</div>
+                <div class="card-body">
+                    <div class="mini-grid">
+                        <div class="form-group">
+                            <label data-i18n="lblFreq">Frequency f (kHz)</label>
+                            <input type="number" id="freq" value="85" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblK">Coupling k</label>
+                            <input type="number" id="k" value="0.2" step="0.01" min="0" max="1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblVs">Source V_s (V rms)</label>
+                            <input type="number" id="vs" value="24" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblRs">Source R_s (&Omega;)</label>
+                            <input type="number" id="rs" value="50" step="0.1">
+                        </div>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="autoM" checked>
+                        <span data-i18n="autoM">Auto-calculate M from k</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head" data-i18n="cardCoil">Coil Parameters</div>
+                <div class="card-body">
+                    <div class="mini-grid">
+                        <div class="form-group">
+                            <label data-i18n="lblL1">L&#8321; Primary (&micro;H)</label>
+                            <input type="number" id="l1" value="50" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblL2">L&#8322; Secondary (&micro;H)</label>
+                            <input type="number" id="l2" value="50" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblM">M Mutual (&micro;H)</label>
+                            <input type="number" id="m" value="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblESR">ESR R&#8321; / R&#8322; (&Omega;)</label>
+                            <div class="mini-grid">
+                                <input type="number" id="r1" value="0.1" step="0.01">
+                                <input type="number" id="r2" value="0.1" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head" data-i18n="cardQ">Matching Component Quality</div>
+                <div class="card-body">
+                    <div class="mini-grid">
+                        <div class="form-group">
+                            <label data-i18n="lblQL">Inductor Q (series)</label>
+                            <input type="number" id="qL" value="80" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblQC">Capacitor Q</label>
+                            <input type="number" id="qC" value="500" step="10">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblVmax">Max V on C (V peak)</label>
+                            <input type="number" id="vmaxC" value="50" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblImax">Max I on L (A peak)</label>
+                            <input type="number" id="imaxL" value="3" step="0.1">
+                        </div>
+                    </div>
+                    <div class="legend" data-i18n="legendQ">Q values model matching-element loss (ESR = X/Q series, Rp = Q·X shunt). Stress limits are used only for rating badges.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head" data-i18n="cardLimits">Source / Load Limits</div>
+                <div class="card-body">
+                    <div class="mini-grid">
+                        <div class="form-group">
+                            <label data-i18n="lblRL">Load R_L (&Omega;)</label>
+                            <input type="number" id="rl" value="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblTol">SS Tolerance (%)</label>
+                            <input type="number" id="tolerance" value="5" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblMaxQ">Max Desired Q</label>
+                            <input type="number" id="maxQ" value="10" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="lblBwPts">Bandwidth points</label>
+                            <input type="number" id="bwPoints" value="9" step="1" min="3" max="21">
+                        </div>
+                    </div>
+                    <div class="legend" style="margin-top:10px;" data-i18n="legendAssume">Assumptions: sinusoidal steady state, resistive source/load, series-resonant secondary, coil ESR included. Matching Q adds element loss.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head" data-i18n="cardModel">Physical Model</div>
+                <div class="card-body">
+                    <div class="math-block">Coupled-coil model:
+  V&#8321; = (R&#8321; + j&omega;L&#8321;)I&#8321; + j&omega;M I&#8322;
+  V&#8322; = j&omega;M I&#8321; + (R&#8322; + j&omega;L&#8322;)I&#8322;
+
+Secondary resonance:
+  C&#8322; = 1 / (&omega;&sup2;L&#8322;)
+
+Reflected resistance:
+  R_ref = (&omega;M)&sup2; / (R&#8322; + R_L)
+
+Primary coil equivalent:
+  R_p = R&#8321; + R_ref
+  X_p = &omega;L&#8321;
+
+Matching target:
+  Z_in = R_s + j0
+
+Matching loss (series L/C):
+  ESR = |X| / Q
+Matching loss (shunt L/C):
+  R_p_loss = Q · |X|
+
+Link efficiency:
+  &eta; = P_load / P_in_ac
+  P_load = I&#8322;&sup2; R_L
+  I&#8322; = &omega;M I&#8321; / (R&#8322; + R_L)</div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-head" data-i18n="cardStatus">Status</div>
+                <div class="card-body" id="status-output">
+                    <div class="alert alert-info" data-i18n="initMsg">Initialising&hellip;</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head" data-i18n="cardAnalysis">System Analysis</div>
+                <div class="card-body" id="analysis-output"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-head" data-i18n="cardStress">Component Stress &amp; Bandwidth</div>
+                <div class="card-body" id="stress-output"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-head" data-i18n="cardDecision">Topology Decision</div>
+                <div class="card-body" id="decision-output"></div>
+            </div>
+
+            <div class="card" id="recommended-card" style="display:none;"></div>
+            <div class="card" id="alternative-card" style="display:none;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+
+    /* ---------- i18n ---------- */
+    var LANG = "en";
+    try { LANG = localStorage.getItem("mnLang") || "en"; } catch (e) { LANG = "en"; }
+    if (LANG !== "en" && LANG !== "ru" && LANG !== "zh") LANG = "en";
+
+    var I18N = {
+        en: {
+            credit: "developed by S. Chatterjee",
+            subtitle: "Reflected-impedance analysis, exact L-match synthesis, component stress, and compact circuit schematics",
+            btnCalc: "Calculate Matching Networks",
+            btnExport: "Export CSV",
+            btnHelp: "Help",
+            btnClose: "Close",
+            hintLive: "Inputs recalculate live · Enter also recalculates",
+            langLabel: "Language",
+            helpTitle: "User Manual",
+            cardSystem: "System Inputs",
+            cardCoil: "Coil Parameters",
+            cardQ: "Matching Component Quality",
+            cardLimits: "Source / Load Limits",
+            cardModel: "Physical Model",
+            cardStatus: "Status",
+            cardAnalysis: "System Analysis",
+            cardStress: "Component Stress & Bandwidth",
+            cardDecision: "Topology Decision",
+            lblFreq: "Frequency f (kHz)",
+            lblK: "Coupling k",
+            lblVs: "Source V_s (V rms)",
+            lblRs: "Source R_s (Ω)",
+            autoM: "Auto-calculate M from k",
+            lblL1: "L₁ Primary (µH)",
+            lblL2: "L₂ Secondary (µH)",
+            lblM: "M Mutual (µH)",
+            lblESR: "ESR R₁ / R₂ (Ω)",
+            lblQL: "Inductor Q (series)",
+            lblQC: "Capacitor Q",
+            lblVmax: "Max V on C (V peak)",
+            lblImax: "Max I on L (A peak)",
+            legendQ: "Q values model matching-element loss (ESR = X/Q series, Rp = Q·X shunt). Stress limits are used only for rating badges.",
+            lblRL: "Load R_L (Ω)",
+            lblTol: "SS Tolerance (%)",
+            lblMaxQ: "Max Desired Q",
+            lblBwPts: "Bandwidth points",
+            legendAssume: "Assumptions: sinusoidal steady state, resistive source/load, series-resonant secondary, coil ESR included. Matching Q adds element loss.",
+            recTopo: "Recommended topology:",
+            lM: "M", lK: "k", lXM: "ωM", lRref: "Reflected R",
+            lSsMis: "SS mismatch", lExactQ: "Exact Q",
+            lLinkEff: "Link eff. (η)", lTotEff: "Total eff. (η)", lMatchEff: "Match eff. (η)",
+            lOmega: "ω", lXL1: "X_L1", lXL2: "X_L2",
+            lZinUncomp: "Uncompensated Z_in", lZinMag: "|Z_in| uncomp.",
+            lRp: "R_p (resonant sec.)",
+            lSsRin: "SS input resistance", lExactAvail: "Exact match available", lExactQ2: "Exact match Q",
+            lRecommended: "Recommended",
+            noteResonance: "Series secondary resonance makes the reflected impedance real; the primary network then transforms R_p to R_s. Matching Q is modeled as element ESR / Rp.",
+            thElement: "Element", thSymbol: "Symbol", thValue: "Value", thNote: "Note",
+            subValues: "Component Values", subDeriv: "Derivation / Accuracy Check",
+            subRec: "Recommended Matching Network", subAlt: "Alternative / Baseline Topology",
+            legendSvg: "Dashed arcs = magnetic coupling (M, k). Filled dots = coil polarity (same end). Stress tags show peak values vs component ratings.",
+            lI1: "I1 primary (rms / pk)", lI2: "I2 secondary (rms / pk)",
+            lVC2: "V on C2 (rms / pk)", lVL1: "V on L1 (rms / pk)", lVL2: "V on L2 (rms / pk)",
+            lVser: "V on series match (pk)", lVC1: "V on C1 (pk)", lVsh: "V on shunt (pk)",
+            lLimits: "I_max / V_max limits",
+            badgeI1ok: "I1 peak within limit", badgeI1fail: "I1 peak exceeds I_max",
+            badgeI2ok: "I2 peak within limit", badgeI2fail: "I2 peak exceeds I_max",
+            badgeC2ok: "C2 voltage OK", badgeC2warn: "C2 near limit", badgeC2fail: "C2 overvoltage",
+            subBw: "Match bandwidth",
+            lQsec: "Q secondary", lF0: "f0", lBwSec: "BW secondary (≈f0/Q)",
+            lBwMatch: "BW match (≈f0/Q_m)", lBwUse: "Usable BW (min)", lBwRatio: "BW / f0",
+            subPwr: "Power vs frequency (green = within usable BW)",
+            legendSweep: "Sweep uses the synthesized matching L/C at each frequency (secondary C fixed at f0). Shape is reliable; absolute power depends on source drive.",
+            nameSS: "Series-Series (SS)",
+            nameExactA: "Exact L-Type Match — Shunt at Inverter",
+            nameExactB: "Exact L-Type Match — Shunt at Coil",
+            badgeSS: "SS", badgeExact: "EXACT MATCH",
+            yes: "Yes", no: "No",
+            csvPrompt: "Save CSV as:",
+            initMsg: "Initialising…",
+            helpHtml: [
+                "<h3>What this program does</h3>",
+                "<p>Designs the primary matching network for a series-resonant secondary wireless power transfer (WPT) link. It computes reflected impedance, synthesizes an exact two-element L-match toward Z<sub>in</sub> = R<sub>s</sub>, estimates coil and match losses, component stress, and usable bandwidth, and draws compact circuit schematics.</p>",
+                "<h3>How to use</h3>",
+                "<ul>",
+                "<li><b>System Inputs</b> — set operating frequency, coupling k (or enter M directly), source voltage and resistance.</li>",
+                "<li><b>Coil Parameters</b> — enter L₁, L₂, mutual M (auto-filled from k when enabled), and coil ESR R₁/R₂.</li>",
+                "<li><b>Matching Component Quality</b> — inductor Q, capacitor Q, and peak V/I rating limits used only for stress badges.</li>",
+                "<li><b>Source / Load Limits</b> — load R<sub>L</sub>, SS tolerance for “already matched” detection, max desired match Q, and bandwidth sweep points.</li>",
+                "<li>Results update live. Press <b>Enter</b> in any field or click <b>Calculate Matching Networks</b> to force a recalculation.</li>",
+                "<li><b>Export CSV</b> saves parameters, component values, efficiencies, stress, and warnings.</li>",
+                "</ul>",
+                "<h3>Reading the results</h3>",
+                "<ul>",
+                "<li><b>Recommended topology</b> — Series-Series if mismatch is within tolerance; otherwise the lowest-Q exact L-match.</li>",
+                "<li><b>Link eff. (η)</b> — coil loss only (ESR). <b>Match eff. (η)</b> — matching-element Q loss. <b>Total eff. (η)</b> — product of the two.</li>",
+                "<li><b>Stress badges</b> — green within limit, yellow near limit (≥85%), red over rating. Peaks are RMS × √2.</li>",
+                "<li><b>Usable BW</b> — min(secondary f₀/Q, match f₀/Q<sub>m</sub>). Green bars in the sweep lie inside that window.</li>",
+                "</ul>",
+                "<h3>Schematics</h3>",
+                "<p>Primary above, secondary below. Dashed arcs show magnetic coupling (M, k). Filled dots mark coil polarity (same end). Stress tags under components show peak values against your rating limits.</p>",
+                "<h3>Physics model</h3>",
+                "<div class=\"math-block\">Secondary resonance: C₂ = 1/(ω²L₂)\n",
+                "Reflected R: R_ref = (ωM)² / (R₂+R_L)\n",
+                "Primary equivalent: R_p = R₁ + R_ref\n",
+                "Target: Z_in = R_s + j0\n",
+                "Series loss: ESR = |X|/Q\n",
+                "Shunt loss: Rp = Q·|X|</div>",
+                "<p>Exact L-match uses the classic reactance/ admittance solutions (orientation A: shunt at inverter; orientation B: shunt at coil). Orientation with the lower Q is preferred.</p>",
+                "<h3>Tips & limitations</h3>",
+                "<ul>",
+                "<li>If no exact match exists, raise coupling/k or change R<sub>L</sub> / R<sub>s</sub>.</li>",
+                "<li>High match Q narrows bandwidth and increases element loss — watch η<sub>match</sub>.</li>",
+                "<li>Model assumes sinusoidal steady state, resistive source/load, and a series-resonant secondary.</li>",
+                "<li>Component ratings are peak values; real parts also need voltage/current derating and ESR checks.</li>",
+                "</ul>"
+            ].join("")
+        },
+        ru: {
+            credit: "разработано S. Chatterjee",
+            subtitle: "Анализ отражённого импеданса, точный L-согласующий фильтр, нагрузка на элементы и компактные схемы",
+            btnCalc: "Рассчитать согласующие сети",
+            btnExport: "Экспорт CSV",
+            btnHelp: "Справка",
+            btnClose: "Закрыть",
+            hintLive: "Расчёт выполняется сразу · Enter также пересчитывает",
+            langLabel: "Язык",
+            helpTitle: "Руководство пользователя",
+            cardSystem: "Системные параметры",
+            cardCoil: "Параметры катушек",
+            cardQ: "Добротность согласующих элементов",
+            cardLimits: "Пределы источника / нагрузки",
+            cardModel: "Физическая модель",
+            cardStatus: "Статус",
+            cardAnalysis: "Системный анализ",
+            cardStress: "Нагрузка на элементы и полоса",
+            cardDecision: "Выбор топологии",
+            lblFreq: "Частота f (кГц)",
+            lblK: "Связь k",
+            lblVs: "Источник V_s (В д.с.м.)",
+            lblRs: "Сопротивление R_s (Ом)",
+            autoM: "Автовычисление M из k",
+            lblL1: "L₁ первичная (мкГн)",
+            lblL2: "L₂ вторичная (мкГн)",
+            lblM: "M взаимная (мкГн)",
+            lblESR: "ESR R₁ / R₂ (Ом)",
+            lblQL: "Добротность дросселя (посл.)",
+            lblQC: "Добротность конденсатора",
+            lblVmax: "Макс. U на C (В пик)",
+            lblImax: "Макс. I в L (А пик)",
+            legendQ: "Q моделирует потери согласующих элементов (ESR = |X|/Q послед., Rp = Q·|X| шунт). Пределы — только для индикаторов.",
+            lblRL: "Нагрузка R_L (Ом)",
+            lblTol: "Допуск SS (%)",
+            lblMaxQ: "Макс. желаемый Q",
+            lblBwPts: "Точек полосы",
+            legendAssume: "Предпосылки: синусоидальный режим, активные источник/нагрузка, последовательный резонанс вторичной цепи, учтён ESR катушек. Добротность согласования добавляет потери.",
+            recTopo: "Рекомендуемая топология:",
+            lM: "M", lK: "k", lXM: "ωM", lRref: "Отражённый R",
+            lSsMis: "Рассогласование SS", lExactQ: "Точный Q",
+            lLinkEff: "КПД связи (η)", lTotEff: "Общий КПД (η)", lMatchEff: "КПД соглас. (η)",
+            lOmega: "ω", lXL1: "X_L1", lXL2: "X_L2",
+            lZinUncomp: "Некомпенсированный Z_in", lZinMag: "|Z_in| без компенсации",
+            lRp: "R_p (резонанс втор.)",
+            lSsRin: "Входное сопротивление SS", lExactAvail: "Точное согласование", lExactQ2: "Q точного соглас.",
+            lRecommended: "Рекомендовано",
+            noteResonance: "Последовательный резонанс вторичной цепи делает отражённый импеданс активным; первичная сеть преобразует R_p в R_s. Добротность согласования — потери ESR / Rp.",
+            thElement: "Элемент", thSymbol: "Обозн.", thValue: "Значение", thNote: "Примечание",
+            subValues: "Значения компонентов", subDeriv: "Вывод / проверка точности",
+            subRec: "Рекомендуемая согласующая сеть", subAlt: "Альтернатива / базовая топология",
+            legendSvg: "Пунктирные дуги — магнитная связь (M, k). Запятые — полярность катушек (один конец). Теги — пиковые значения относительно пределов.",
+            lI1: "I1 первичная (д.с.м. / пик)", lI2: "I2 вторичная (д.с.м. / пик)",
+            lVC2: "U на C2 (д.с.м. / пик)", lVL1: "U на L1 (д.с.м. / пик)", lVL2: "U на L2 (д.с.м. / пик)",
+            lVser: "U на послед. соглас. (пик)", lVC1: "U на C1 (пик)", lVsh: "U на шунте (пик)",
+            lLimits: "Пределы I_max / V_max",
+            badgeI1ok: "Пик I1 в пределе", badgeI1fail: "Пик I1 выше I_max",
+            badgeI2ok: "Пик I2 в пределе", badgeI2fail: "Пик I2 выше I_max",
+            badgeC2ok: "Напряжение C2 норма", badgeC2warn: "C2 около предела", badgeC2fail: "Перенапряжение C2",
+            subBw: "Полоса согласования",
+            lQsec: "Q вторичной", lF0: "f0", lBwSec: "Полоса втор. (≈f0/Q)",
+            lBwMatch: "Полоса соглас. (≈f0/Q_m)", lBwUse: "Полезная полоса (мин)", lBwRatio: "Полоса / f0",
+            subPwr: "Мощность vs частота (зелёная — внутри полосы)",
+            legendSweep: "Развёртка использует синтезированные L/C на каждой частоте (C₂ вторичной фиксирован на f0). Форма надёжна; абсолютная мощность зависит от источника.",
+            nameSS: "Последовательно-последовательная (SS)",
+            nameExactA: "Точное L-согласование — шунт у инвертора",
+            nameExactB: "Точное L-согласование — шунт у катушки",
+            badgeSS: "SS", badgeExact: "ТОЧНОЕ СОГЛ.",
+            yes: "Да", no: "Нет",
+            csvPrompt: "Сохранить CSV как:",
+            initMsg: "Инициализация…",
+            helpHtml: [
+                "<h3>Что делает программа</h3>",
+                "<p>Проектирует первичную согласующую сеть для WPT-связи с последовательным резонансом вторичной цепи. Считает отражённый импеданс, синтезирует точный двухэлементный L-фильтр к Z<sub>in</sub> = R<sub>s</sub>, оценивает потери катушек и согласования, нагрузку на элементы, полосу и рисует компактные схемы.</p>",
+                "<h3>Как пользоваться</h3>",
+                "<ul>",
+                "<li><b>Системные параметры</b> — частота, связь k (или M напрямую), напряжение и сопротивление источника.</li>",
+                "<li><b>Параметры катушек</b> — L₁, L₂, взаимная M (авто из k), ESR R₁/R₂.</li>",
+                "<li><b>Добротность элементов</b> — Q дросселя, Q конденсатора, пиковые пределы V/I только для индикаторов.</li>",
+                "<li><b>Пределы</b> — R<sub>L</sub>, допуск SS, макс. Q согласования, точек развёртки полосы.</li>",
+                "<li>Результаты обновляются сразу. <b>Enter</b> в любом поле или кнопка <b>Рассчитать</b> — принудительный пересчёт.</li>",
+                "<li><b>Экспорт CSV</b> — параметры, компоненты, КПД, нагрузка, предупреждения.</li>",
+                "</ul>",
+                "<h3>Как читать результаты</h3>",
+                "<ul>",
+                "<li><b>Рекомендуемая топология</b> — SS, если рассогласование в допуске; иначе L-согласование с минимальным Q.</li>",
+                "<li><b>КПД связи (η)</b> — только потери катушек. <b>КПД соглас.</b> — потери элементов. <b>Общий</b> — произведение.</li>",
+                "<li><b>Индикаторы</b> — зелёный в пределе, жёлтый близко (≥85%), красный выше предела. Пики = RMS × √2.</li>",
+                "<li><b>Полезная полоса</b> — min(f₀/Q втор., f₀/Q<sub>согл</sub>). Зелёные столбцы — внутри окна.</li>",
+                "</ul>",
+                "<h3>Схемы</h3>",
+                "<p>Первичная цепь сверху, вторичная снизу. Пунктирные дуги — связь (M, k). Точки — полярность. Теги — пиковые значения.</p>",
+                "<h3>Физическая модель</h3>",
+                "<div class=\"math-block\">Резонанс втор.: C₂ = 1/(ω²L₂)\n",
+                "Отражённый R: R_ref = (ωM)² / (R₂+R_L)\n",
+                "Первичный экв.: R_p = R₁ + R_ref\n",
+                "Цель: Z_in = R_s + j0\n",
+                "Послед. потери: ESR = |X|/Q\n",
+                "Шунт: Rp = Q·|X|</div>",
+                "<p>Точное L-согласование — классические решения (ориентация A: шунт у инвертора; B: шунт у катушки). Выбирается меньший Q.</p>",
+                "<h3>Советы и ограничения</h3>",
+                "<ul>",
+                "<li>Если точного согласования нет — увеличьте k/M или измените R<sub>L</sub> / R<sub>s</sub>.</li>",
+                "<li>Высокий Q сужает полосу и растит потери — следите за η<sub>согл</sub>.</li>",
+                "<li>Модель: синусоидальный режим, активные источник/нагрузка, последовательный резонанс вторичной цепи.</li>",
+                "<li>Пределы — пиковые; реальные детали требуют запаса по напряжению/току и проверки ESR.</li>",
+                "</ul>"
+            ].join("")
+        },
+        zh: {
+            credit: "由 S. Chatterjee 开发",
+            subtitle: "反射阻抗分析、精确 L 匹配综合、元件应力与紧凑电路原理图",
+            btnCalc: "计算匹配网络",
+            btnExport: "导出 CSV",
+            btnHelp: "帮助",
+            btnClose: "关闭",
+            hintLive: "输入即时重算 · 回车也可重算",
+            langLabel: "语言",
+            helpTitle: "用户手册",
+            cardSystem: "系统输入",
+            cardCoil: "线圈参数",
+            cardQ: "匹配元件品质因数",
+            cardLimits: "源 / 负载限制",
+            cardModel: "物理模型",
+            cardStatus: "状态",
+            cardAnalysis: "系统分析",
+            cardStress: "元件应力与带宽",
+            cardDecision: "拓扑决策",
+            lblFreq: "频率 f (kHz)",
+            lblK: "耦合系数 k",
+            lblVs: "电源 V_s (V 有效值)",
+            lblRs: "电源内阻 R_s (Ω)",
+            autoM: "由 k 自动计算 M",
+            lblL1: "L₁ 初级 (µH)",
+            lblL2: "L₂ 次级 (µH)",
+            lblM: "互感 M (µH)",
+            lblESR: "ESR R₁ / R₂ (Ω)",
+            lblQL: "电感 Q (串联)",
+            lblQC: "电容 Q",
+            lblVmax: "电容最大 V (峰值)",
+            lblImax: "电感最大 I (峰值)",
+            legendQ: "Q 用于匹配元件损耗（串联 ESR = |X|/Q，并联 Rp = Q·|X|）。应力限制仅用于评级徽章。",
+            lblRL: "负载 R_L (Ω)",
+            lblTol: "SS 容差 (%)",
+            lblMaxQ: "最大期望 Q",
+            lblBwPts: "带宽采样点",
+            legendAssume: "假设：正弦稳态、阻性源/负载、次级串联谐振、计入线圈 ESR。匹配 Q 会引入元件损耗。",
+            recTopo: "推荐拓扑：",
+            lM: "M", lK: "k", lXM: "ωM", lRref: "反射电阻",
+            lSsMis: "SS 失配", lExactQ: "精确 Q",
+            lLinkEff: "链路效率 (η)", lTotEff: "总效率 (η)", lMatchEff: "匹配效率 (η)",
+            lOmega: "ω", lXL1: "X_L1", lXL2: "X_L2",
+            lZinUncomp: "未补偿 Z_in", lZinMag: "未补偿 |Z_in|",
+            lRp: "R_p (次级谐振)",
+            lSsRin: "SS 输入电阻", lExactAvail: "精确匹配可用", lExactQ2: "精确匹配 Q",
+            lRecommended: "推荐",
+            noteResonance: "次级串联谐振使反射阻抗呈纯阻；初级网络再将 R_p 变换为 R_s。匹配 Q 按元件 ESR / Rp 建模。",
+            thElement: "元件", thSymbol: "符号", thValue: "数值", thNote: "备注",
+            subValues: "元件数值", subDeriv: "推导 / 精度校验",
+            subRec: "推荐匹配网络", subAlt: "备选 / 基准拓扑",
+            legendSvg: "虚线弧 = 磁耦合 (M, k)。实心点 = 线圈同名端。应力标签为相对额定值的峰值。",
+            lI1: "I1 初级 (有效/峰)", lI2: "I2 次级 (有效/峰)",
+            lVC2: "C2 电压 (有效/峰)", lVL1: "L1 电压 (有效/峰)", lVL2: "L2 电压 (有效/峰)",
+            lVser: "串联匹配电压 (峰)", lVC1: "C1 电压 (峰)", lVsh: "并联电压 (峰)",
+            lLimits: "I_max / V_max 限制",
+            badgeI1ok: "I1 峰值在限内", badgeI1fail: "I1 峰值超过 I_max",
+            badgeI2ok: "I2 峰值在限内", badgeI2fail: "I2 峰值超过 I_max",
+            badgeC2ok: "C2 电压正常", badgeC2warn: "C2 接近限制", badgeC2fail: "C2 过压",
+            subBw: "匹配带宽",
+            lQsec: "次级 Q", lF0: "f0", lBwSec: "次级带宽 (≈f0/Q)",
+            lBwMatch: "匹配带宽 (≈f0/Q_m)", lBwUse: "可用带宽 (最小)", lBwRatio: "带宽 / f0",
+            subPwr: "功率 vs 频率 (绿色 = 可用带宽内)",
+            legendSweep: "扫描在各频率使用合成的匹配 L/C（次级 C 固定在 f0）。曲线形状可靠；绝对功率取决于源驱动。",
+            nameSS: "串联-串联 (SS)",
+            nameExactA: "精确 L 匹配 — 并联在逆变器侧",
+            nameExactB: "精确 L 匹配 — 并联在线圈侧",
+            badgeSS: "SS", badgeExact: "精确匹配",
+            yes: "是", no: "否",
+            csvPrompt: "CSV 另存为：",
+            initMsg: "初始化中…",
+            helpHtml: [
+                "<h3>本程序的功能</h3>",
+                "<p>为次级串联谐振的无线电能传输（WPT）链路设计初级匹配网络。计算反射阻抗，综合使 Z<sub>in</sub> = R<sub>s</sub> 的精确二元件 L 匹配，估计线圈与匹配损耗、元件应力、可用带宽，并绘制紧凑原理图。</p>",
+                "<h3>使用方法</h3>",
+                "<ul>",
+                "<li><b>系统输入</b> — 工作频率、耦合系数 k（或直接输入 M）、电源电压与内阻。</li>",
+                "<li><b>线圈参数</b> — L₁、L₂、互感 M（可由 k 自动填入）、线圈 ESR R₁/R₂。</li>",
+                "<li><b>匹配元件品质</b> — 电感 Q、电容 Q，以及仅用于应力徽章的峰值 V/I 额定限制。</li>",
+                "<li><b>源 / 负载限制</b> — 负载 R<sub>L</sub>、判定“已匹配”的 SS 容差、最大期望匹配 Q、带宽采样点数。</li>",
+                "<li>结果即时更新。在任意输入框按 <b>Enter</b>，或点击 <b>计算匹配网络</b> 强制重算。</li>",
+                "<li><b>导出 CSV</b> 保存参数、元件值、效率、应力与警告。</li>",
+                "</ul>",
+                "<h3>如何阅读结果</h3>",
+                "<ul>",
+                "<li><b>推荐拓扑</b> — 失配在容差内用 SS；否则选 Q 最低的精确 L 匹配。</li>",
+                "<li><b>链路效率 (η)</b> — 仅线圈损耗。<b>匹配效率</b> — 匹配元件 Q 损耗。<b>总效率</b> — 两者之积。</li>",
+                "<li><b>应力徽章</b> — 绿色在限内，黄色接近（≥85%），红色超额定。峰值 = 有效值 × √2。</li>",
+                "<li><b>可用带宽</b> — min(次级 f₀/Q, 匹配 f₀/Q<sub>m</sub>)。扫描图中绿色柱在此窗口内。</li>",
+                "</ul>",
+                "<h3>原理图</h3>",
+                "<p>初级在上，次级在下。虚线弧表示磁耦合 (M, k)。实心点为线圈同名端。元件下方标签为相对额定限制的峰值。</p>",
+                "<h3>物理模型</h3>",
+                "<div class=\"math-block\">次级谐振：C₂ = 1/(ω²L₂)\n",
+                "反射电阻：R_ref = (ωM)² / (R₂+R_L)\n",
+                "初级等效：R_p = R₁ + R_ref\n",
+                "目标：Z_in = R_s + j0\n",
+                "串联损耗：ESR = |X|/Q\n",
+                "并联损耗：Rp = Q·|X|</div>",
+                "<p>精确 L 匹配采用经典电抗/导纳解（方向 A：并联在逆变器侧；方向 B：并联在线圈侧）。优先选 Q 较小者。</p>",
+                "<h3>提示与限制</h3>",
+                "<ul>",
+                "<li>若无精确匹配，可增大耦合/k 或调整 R<sub>L</sub> / R<sub>s</sub>。</li>",
+                "<li>匹配 Q 过高会缩窄带宽并增加元件损耗 — 请注意 η<sub>匹配</sub>。</li>",
+                "<li>模型假设：正弦稳态、阻性源/负载、次级串联谐振。</li>",
+                "<li>额定值为峰值；实际器件还需降额与 ESR 校核。</li>",
+                "</ul>"
+            ].join("")
+        }
+    };
+
+    function t(key) {
+        var d = I18N[LANG] || I18N.en;
+        return d[key] !== undefined ? d[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+    }
+
+    function applyI18n() {
+        document.documentElement.lang = (LANG === "zh") ? "zh-CN" : LANG;
+        var nodes = document.querySelectorAll("[data-i18n]");
+        for (var i = 0; i < nodes.length; i++) {
+            var k = nodes[i].getAttribute("data-i18n");
+            var val = t(k);
+            if (typeof val === "string") nodes[i].textContent = val;
+        }
+        var body = $("helpBody");
+        if (body) body.innerHTML = t("helpHtml");
+    }
+
+    /* ---------- generic helpers ---------- */
+
+    function $(id) { return document.getElementById(id); }
+
+    function getNum(id) { return parseFloat($(id).value); }
+
+    function banner(msg) {
+        var el = $("errBanner");
+        el.style.display = "block";
+        el.textContent = msg;
+    }
+
+    function hideBanner() {
+        $("errBanner").style.display = "none";
+    }
+
+    window.addEventListener("error", function (e) {
+        banner("Script error: " + e.message + " (line " + e.lineno + ")");
+    });
+
+    function fmtSI(value, unit, digits) {
+        if (digits === undefined) digits = 3;
+        if (!isFinite(value)) return "—";
+        if (value === 0) return "0 " + unit;
+        var abs = Math.abs(value);
+        var prefixes = [
+            [1e12, "T"], [1e9, "G"], [1e6, "M"], [1e3, "k"], [1, ""],
+            [1e-3, "m"], [1e-6, "µ"], [1e-9, "n"], [1e-12, "p"], [1e-15, "f"]
+        ];
+        for (var i = 0; i < prefixes.length; i++) {
+            if (abs >= prefixes[i][0]) {
+                return (value / prefixes[i][0]).toFixed(digits) + " " + prefixes[i][1] + unit;
+            }
+        }
+        return value.toExponential(digits) + " " + unit;
+    }
+
+    function pct(x) { return isFinite(x) ? (x * 100).toFixed(1) + "%" : "—"; }
+
+    function fmtZ(z) {
+        var sign = z.im >= 0 ? "+" : "-";
+        return fmtSI(z.re, "Ω", 3) + " " + sign + " j" + fmtSI(Math.abs(z.im), "Ω", 3);
+    }
+
+    function resultItem(label, value, cls, keepLabel) {
+        return '<div class="result-item"><div class="result-label' + (keepLabel ? " keep" : "") + '">' + label +
+               '</div><div class="result-value' + (cls ? " " + cls : "") + '">' + value + '</div></div>';
+    }
+
+    function stressClass(ok, warn) {
+        if (ok === false) return "fail";
+        if (warn) return "warn";
+        return "ok";
+    }
+
+    /* ---------- complex arithmetic ---------- */
+
+    var CZ = {
+        add: function (a, b) { return { re: a.re + b.re, im: a.im + b.im }; },
+        div: function (a, b) {
+            var d = b.re * b.re + b.im * b.im;
+            return { re: (a.re * b.re + a.im * b.im) / d, im: (a.im * b.re - a.re * b.im) / d };
+        },
+        inv: function (a) {
+            var d = a.re * a.re + a.im * a.im;
+            return { re: a.re / d, im: -a.im / d };
+        },
+        mag: function (a) { return Math.hypot(a.re, a.im); },
+        mul: function (a, b) {
+            return { re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re };
+        }
+    };
+
+    /* ---------- component synthesis ---------- */
+
+    function seriesComponent(X, w) {
+        var eps = 1e-9;
+        if (!isFinite(X) || Math.abs(X) < eps) {
+            return { kind: "wire", des: "W", name: "Series link (wire)", valueText: "0 Ω", value: 0, x: 0 };
+        }
+        if (X > 0) {
+            var L = X / w;
+            return { kind: "L", des: "L_ser", name: "Series inductor", valueText: fmtSI(L, "H", 3), value: L, x: X };
+        }
+        var Cv = -1 / (w * X);
+        return { kind: "C", des: "C_ser", name: "Series capacitor", valueText: fmtSI(Cv, "F", 3), value: Cv, x: X };
+    }
+
+    function shuntComponent(B, w) {
+        var eps = 1e-9;
+        if (!isFinite(B) || Math.abs(B) < eps) {
+            return { kind: "open", des: "open", name: "No shunt element", valueText: "0 S", value: 0, b: 0 };
+        }
+        if (B > 0) {
+            var Cv = B / w;
+            return { kind: "C", des: "C_sh", name: "Shunt capacitor", valueText: fmtSI(Cv, "F", 3), value: Cv, b: B };
+        }
+        var L = -1 / (w * B);
+        return { kind: "L", des: "L_sh", name: "Shunt inductor", valueText: fmtSI(L, "H", 3), value: L, b: B };
+    }
+
+    function seriesLossR(comp, Q) {
+        if (!comp || comp.kind === "wire" || !isFinite(comp.x) || comp.x === 0) return 0;
+        var q = Q > 0 ? Q : 1e9;
+        return Math.abs(comp.x) / q;
+    }
+
+    function designExactMatch(Rs, R, X1) {
+        var candidates = [];
+        var eps = 1e-12;
+        if (!(R > eps)) return null;
+
+        if (Rs >= R - eps) {
+            var Xmag = Math.sqrt(Math.max(0, R * (Rs - R)));
+            [1, -1].forEach(function (sign) {
+                var Xtot = sign * Xmag;
+                var Xs = Xtot - X1;
+                var B = (R * Rs) > eps ? Xtot / (R * Rs) : 0;
+                var q = Math.max(Math.abs(Xtot) / R, Math.abs(Xs) / R, Math.abs(B) * Rs);
+                if (isFinite(Xs) && isFinite(B)) {
+                    candidates.push({ orientation: "A", Xs: Xs, B: B, Xtot: Xtot, q: q });
+                }
+            });
+        }
+
+        var den = R * R + X1 * X1;
+        if (den > eps) {
+            var G = R / den;
+            var Bload = -X1 / den;
+            if (G > eps && G <= 1 / Rs + eps) {
+                var Bmag = Math.sqrt(Math.max(0, G / Rs - G * G));
+                [1, -1].forEach(function (sign) {
+                    var Btot = sign * Bmag;
+                    var Xs = Btot * Rs / G;
+                    var B = Btot - Bload;
+                    var q = Math.max(Math.abs(Btot) / G, Math.abs(Xs) / Rs, Math.abs(B) * Rs);
+                    if (isFinite(Xs) && isFinite(B)) {
+                        candidates.push({ orientation: "B", Xs: Xs, B: B, Btot: Btot, G: G, Bload: Bload, q: q });
+                    }
+                });
+            }
+        }
+
+        if (!candidates.length) return null;
+        candidates.forEach(function (c) { if (!isFinite(c.q)) c.q = 1e9; });
+        candidates.sort(function (a, b) { return a.q - b.q; });
+        return candidates[0];
+    }
+
+    function zinExact(cand, R, X1) {
+        if (cand.orientation === "A") {
+            var Zser = { re: R, im: X1 + cand.Xs };
+            var Yin = CZ.add(CZ.inv(Zser), { re: 0, im: cand.B });
+            return CZ.inv(Yin);
+        }
+        var Ypar = CZ.add(CZ.inv({ re: R, im: X1 }), { re: 0, im: cand.B });
+        return CZ.add(CZ.inv(Ypar), { re: 0, im: cand.Xs });
+    }
+
+    /* ---------- SVG schematic engine ---------- */
+    /* Compact two-rail circuit: primary over secondary, coils aligned,
+       coupling arcs only in the inter-rail gap, no empty frames. */
+
+    var YP = 118;       // primary top rail
+    var YPR = 218;      // primary return
+    var YS = 372;       // secondary top rail
+    var YSR = 472;      // secondary return
+    var VW = 1040;
+    var VH = 540;
+
+    // slot centers along the rails
+    var X = {
+        src: 78, rs: 230, mid1: 420, mid2: 600, coil: 820,
+        ret: 940, sLeft: 170, sRL: 330, sC2: 540
+    };
+
+    function svgHead(title) {
+        return '<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+            (title || "Matching network schematic") + '">' +
+            '<rect x="0" y="0" width="' + VW + '" height="' + VH + '" fill="#050505"/>' +
+            '<text x="22" y="36" class="stag">PRIMARY</text>' +
+            '<text x="22" y="318" class="stag">SECONDARY</text>' +
+            '<line x1="22" y1="300" x2="' + (VW - 22) + '" y2="300" class="secdiv"/>';
+    }
+
+    function hline(x1, x2, y) {
+        if (x2 - x1 < 1.5) return "";
+        return '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" class="wire"/>';
+    }
+
+    function vline(x, y1, y2) {
+        if (y2 - y1 < 1.5) return "";
+        return '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" class="wire"/>';
+    }
+
+    function labelBlock(cx, y, des, val, dy) {
+        var base = dy === undefined ? -42 : dy;
+        var s = '<text x="' + cx + '" y="' + (y + base) + '" class="slbl" text-anchor="middle">' + des + '</text>';
+        if (val) s += '<text x="' + cx + '" y="' + (y + base + 17) + '" class="sval" text-anchor="middle">' + val + '</text>';
+        return s;
+    }
+
+    function stressTag(cx, y, text, cls) {
+        return '<text x="' + cx + '" y="' + y + '" class="stress ' + (cls || "") + '" text-anchor="middle">' + text + '</text>';
+    }
+
+    function slotRes(cx, y, des, val, stress) {
+        var w = 78, s = cx - w / 2, st = w / 6;
+        var out = hline(cx - 68, s, y) +
+            '<path d="M ' + s + ' ' + y +
+            ' l ' + st + ' -11 l ' + st + ' 22 l ' + st + ' -22 l ' + st + ' 22 l ' + st + ' -22 l ' + st + ' 11" class="comp"/>' +
+            hline(s + w, cx + 68, y) +
+            labelBlock(cx, y, des, val);
+        if (stress) out += stressTag(cx, y + 54, stress.text, stress.cls);
+        return out;
+    }
+
+    function slotCap(cx, y, des, val, stress) {
+        var out = hline(cx - 68, cx - 8, y) +
+            '<line x1="' + (cx - 8) + '" y1="' + (y - 18) + '" x2="' + (cx - 8) + '" y2="' + (y + 18) + '" class="comp"/>' +
+            '<line x1="' + (cx + 8) + '" y1="' + (y - 18) + '" x2="' + (cx + 8) + '" y2="' + (y + 18) + '" class="comp"/>' +
+            hline(cx + 8, cx + 68, y) +
+            labelBlock(cx, y, des, val);
+        if (stress) out += stressTag(cx, y + 54, stress.text, stress.cls);
+        return out;
+    }
+
+    function slotInd(cx, y, des, val, bumps, stress, labelDy) {
+        var n = bumps || 3;
+        var width = n * 24, s = cx - width / 2, seg = width / n;
+        var d = "M " + s + " " + y;
+        for (var i = 0; i < n; i++) d += " q " + (seg / 2) + " -18 " + seg + " 0";
+        var out = hline(cx - 68, s, y) +
+            '<path d="' + d + '" class="comp"/>' +
+            hline(s + width, cx + 68, y) +
+            labelBlock(cx, y, des, val, labelDy);
+        if (stress) out += stressTag(cx, y + 54, stress.text, stress.cls);
+        return out;
+    }
+
+    function slotWire(cx, y, des, val, stress) {
+        var out = hline(cx - 68, cx + 68, y) + labelBlock(cx, y, des, val || "");
+        if (stress) out += stressTag(cx, y + 54, stress.text, stress.cls);
+        return out;
+    }
+
+    function seriesSlot(cx, y, comp, stress) {
+        if (comp.kind === "C") return slotCap(cx, y, comp.des, comp.valueText, stress);
+        if (comp.kind === "L") return slotInd(cx, y, comp.des, comp.valueText, 3, stress);
+        return slotWire(cx, y, comp.des, comp.valueText, stress);
+    }
+
+    function shuntBranch(cx, yTop, yBot, comp, stress) {
+        var mid = (yTop + yBot) / 2;
+        if (!comp || comp.kind === "open") {
+            return '<circle cx="' + cx + '" cy="' + yTop + '" r="3.5" class="dot"/>' +
+                '<text x="' + cx + '" y="' + (mid + 4) + '" class="stag" text-anchor="middle">no shunt</text>';
+        }
+        var sym = "";
+        if (comp.kind === "C") {
+            sym = vline(cx, yTop, mid - 11) +
+                '<line x1="' + (cx - 18) + '" y1="' + (mid - 11) + '" x2="' + (cx + 18) + '" y2="' + (mid - 11) + '" class="comp"/>' +
+                '<line x1="' + (cx - 18) + '" y1="' + (mid + 11) + '" x2="' + (cx + 18) + '" y2="' + (mid + 11) + '" class="comp"/>' +
+                vline(cx, mid + 11, yBot);
+        } else {
+            var h = 58, s = mid - h / 2, seg = h / 3;
+            var d = "M " + cx + " " + s;
+            for (var i = 0; i < 3; i++) d += " q 16 " + (seg / 2) + " 0 " + seg;
+            sym = vline(cx, yTop, s) +
+                '<path d="' + d + '" class="comp"/>' +
+                vline(cx, s + h, yBot);
+        }
+        return '<circle cx="' + cx + '" cy="' + yTop + '" r="3.5" class="dot"/>' + sym +
+            '<text x="' + (cx + 26) + '" y="' + (mid - 6) + '" class="slbl" text-anchor="start">' + comp.des + '</text>' +
+            '<text x="' + (cx + 26) + '" y="' + (mid + 11) + '" class="sval" text-anchor="start">' + comp.valueText + '</text>' +
+            (stress ? '<text x="' + (cx + 26) + '" y="' + (mid + 28) + '" class="stress ' + (stress.cls || "") + '" text-anchor="start">' + stress.text + '</text>' : "");
+    }
+
+    function acSource(x, yTop, yBot, vsText) {
+        var cy = (yTop + yBot) / 2;
+        return vline(x, yTop, cy - 22) +
+            '<circle cx="' + x + '" cy="' + cy + '" r="22" class="comp"/>' +
+            '<path d="M ' + (x - 11) + ' ' + cy + ' q 5 -10 11 0 q 5 10 11 0" class="comp"/>' +
+            vline(x, cy + 22, yBot) +
+            '<text x="' + (x + 30) + '" y="' + (cy - 2) + '" class="slbl">V_s</text>' +
+            (vsText ? '<text x="' + (x + 30) + '" y="' + (cy + 15) + '" class="sval">' + vsText + '</text>' : "");
+    }
+
+    function ground(x, y) {
+        return vline(x, y, y + 7) +
+            '<line x1="' + (x - 12) + '" y1="' + (y + 7) + '" x2="' + (x + 12) + '" y2="' + (y + 7) + '" class="wire"/>' +
+            '<line x1="' + (x - 7) + '" y1="' + (y + 12) + '" x2="' + (x + 7) + '" y2="' + (y + 12) + '" class="wire"/>' +
+            '<line x1="' + (x - 2) + '" y1="' + (y + 17) + '" x2="' + (x + 2) + '" y2="' + (y + 17) + '" class="wire"/>';
+    }
+
+    function coilPair(base, stressP, stressS) {
+        // Coils aligned vertically; coupling arcs sit only to the RIGHT of symbols
+        var cx = X.coil;
+        var out = "";
+        out += slotInd(cx, YP, "L1", fmtSI(base.L1, "H", 2), 3, stressP, -40);
+        out += slotInd(cx, YS, "L2", fmtSI(base.L2, "H", 2), 3, stressS, -40);
+        // polarity dots on the LEFT of each coil (away from coupling)
+        out += '<circle cx="' + (cx - 46) + '" cy="' + (YP - 14) + '" r="4" class="dot"/>';
+        out += '<circle cx="' + (cx - 46) + '" cy="' + (YS - 14) + '" r="4" class="dot"/>';
+        // coupling: two dashed arcs in the gap, bowing right of the symbols
+        var x0 = cx + 28, x1 = cx + 78, x2 = cx + 100;
+        out += '<path d="M ' + x0 + ' ' + (YP + 16) +
+            ' C ' + x1 + ' ' + ((YP + YS) / 2) + ', ' + x1 + ' ' + ((YP + YS) / 2) + ', ' + x0 + ' ' + (YS - 16) +
+            '" class="coupling"/>';
+        out += '<path d="M ' + (x0 + 16) + ' ' + (YP + 16) +
+            ' C ' + x2 + ' ' + ((YP + YS) / 2) + ', ' + x2 + ' ' + ((YP + YS) / 2) + ', ' + (x0 + 16) + ' ' + (YS - 16) +
+            '" class="coupling"/>';
+        out += '<text x="' + (cx + 118) + '" y="' + ((YP + YS) / 2 - 6) + '" class="sval">M = ' + fmtSI(base.M, "H", 2) + '</text>';
+        out += '<text x="' + (cx + 118) + '" y="' + ((YP + YS) / 2 + 12) + '" class="sval">k = ' + (isFinite(base.k) ? base.k.toFixed(3) : "-") + '</text>';
+        return out;
+    }
+
+    function primaryLoop(vsText, rightX) {
+        return acSource(X.src, YP, YPR, vsText) +
+            hline(X.src, rightX, YPR) +
+            vline(rightX, YP, YPR) +
+            ground(X.src, YPR);
+    }
+
+    function secondaryLoop(leftX, rightX) {
+        return hline(leftX, rightX, YSR) +
+            vline(leftX, YS, YSR) +
+            vline(rightX, YS, YSR) +
+            ground(leftX, YSR);
+    }
+
+    function svgSS(base, stress) {
+        var st = stress || {};
+        var s = svgHead("Series-Series matching schematic");
+        s += primaryLoop(fmtSI(base.Vs, "V", 1), X.ret);
+        s += hline(X.src, X.rs - 68, YP);
+        s += slotRes(X.rs, YP, "R_s", fmtSI(base.Rs, "ohm", 1));
+        s += hline(X.rs + 68, X.mid1 - 68, YP);
+        s += slotCap(X.mid1, YP, "C1", fmtSI(base.C1, "F", 2), st.C1 || null);
+        s += hline(X.mid1 + 68, X.coil - 68, YP);
+        s += hline(X.coil + 68, X.ret, YP);
+        s += secondaryLoop(X.sLeft, X.ret);
+        s += hline(X.sLeft, X.sRL - 68, YS);
+        s += slotRes(X.sRL, YS, "R_L", fmtSI(base.RL, "ohm", 1), st.RL || null);
+        s += hline(X.sRL + 68, X.sC2 - 68, YS);
+        s += slotCap(X.sC2, YS, "C2", fmtSI(base.C2, "F", 2), st.C2 || null);
+        s += hline(X.sC2 + 68, X.coil - 68, YS);
+        s += hline(X.coil + 68, X.ret, YS);
+        s += coilPair(base, st.L1 || null, st.L2 || null);
+        s += "</svg>";
+        return s;
+    }
+
+    function svgExact(base, shunt, series, orientation, stress) {
+        var st = stress || {};
+        var s = svgHead("Exact L-match schematic");
+        s += primaryLoop(fmtSI(base.Vs, "V", 1), X.ret);
+        s += hline(X.src, X.rs - 68, YP);
+        s += slotRes(X.rs, YP, "R_s", fmtSI(base.Rs, "ohm", 1));
+        s += hline(X.rs + 68, X.mid1 - 68, YP);
+
+        var seriesStress = st.series || null;
+        var shuntStress = st.shunt || null;
+
+        if (orientation === "A") {
+            s += shuntBranch(X.mid1, YP, YPR, shunt, shuntStress);
+            s += hline(X.mid1, X.mid2 - 68, YP);
+            s += seriesSlot(X.mid2, YP, series, seriesStress);
+            s += hline(X.mid2 + 68, X.coil - 68, YP);
+        } else {
+            s += seriesSlot(X.mid1, YP, series, seriesStress);
+            s += hline(X.mid1 + 68, X.mid2, YP);
+            s += shuntBranch(X.mid2, YP, YPR, shunt, shuntStress);
+            s += hline(X.mid2, X.coil - 68, YP);
+        }
+
+        s += hline(X.coil + 68, X.ret, YP);
+        s += secondaryLoop(X.sLeft, X.ret);
+        s += hline(X.sLeft, X.sRL - 68, YS);
+        s += slotRes(X.sRL, YS, "R_L", fmtSI(base.RL, "ohm", 1), st.RL || null);
+        s += hline(X.sRL + 68, X.sC2 - 68, YS);
+        s += slotCap(X.sC2, YS, "C2", fmtSI(base.C2, "F", 2), st.C2 || null);
+        s += hline(X.sC2 + 68, X.coil - 68, YS);
+        s += hline(X.coil + 68, X.ret, YS);
+        s += coilPair(base, st.L1 || null, st.L2 || null);
+        s += "</svg>";
+        return s;
+    }
+
+    /* ---------- topology builders ---------- */
+
+    function renderTable(rows) {
+        var html = '<table class="val-table"><thead><tr><th>' + t("thElement") + '</th><th>' + t("thSymbol") + '</th><th>' + t("thValue") + '</th><th>' + t("thNote") + '</th></tr></thead><tbody>';
+        rows.forEach(function (r) {
+            html += "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td><td>" + r[3] + "</td></tr>";
+        });
+        return html + "</tbody></table>";
+    }
+
+    function peak(rms) { return Math.abs(rms) * Math.SQRT2; }
+
+    function ratingCls(peakVal, limit, warnRatio) {
+        var wr = warnRatio === undefined ? 0.85 : warnRatio;
+        if (!isFinite(peakVal) || !isFinite(limit) || limit <= 0) return "ok";
+        if (peakVal > limit) return "fail";
+        if (peakVal > limit * wr) return "warn";
+        return "ok";
+    }
+
+    function makeSS(base, tol) {
+        var ok = base.ssMismatch <= tol;
+        var reason = ok
+            ? "Series-Series resonant input resistance is " + fmtSI(base.ssRin, "Ω", 3) + ", within " + pct(tol) + " of R_s. Simple SS compensation is sufficient."
+            : "Series-Series cancels coil reactances, but input resistance is " + fmtSI(base.ssRin, "Ω", 3) + " (" + pct(base.ssMismatch) + " from R_s). An exact L-match is required for conjugate matching.";
+
+        // Drive with source Vs + Rs into resonant network Zin = Rp
+        var I1 = base.Vs / Math.max(base.Rs + base.Rp, 1e-9);
+        var I2 = (base.XM * I1) / base.Rsec;
+        var VC2 = I2 * (1 / (base.w * base.C2));
+        var VL1 = I1 * base.XL1;
+        var VL2 = I2 * base.XL2;
+        var VC1 = I1 * (1 / (base.w * base.C1));
+        var I1pk = peak(I1), I2pk = peak(I2);
+        var VC2pk = peak(VC2), VC1pk = peak(VC1);
+
+        var stressSS = {
+            C1: { text: "Vpk=" + fmtSI(VC1pk, "V", 1), cls: ratingCls(VC1pk, base.vmaxC) },
+            C2: { text: "Vpk=" + fmtSI(VC2pk, "V", 1), cls: ratingCls(VC2pk, base.vmaxC) },
+            L1: { text: "Ipk=" + fmtSI(I1pk, "A", 2), cls: ratingCls(I1pk, base.imaxL) },
+            L2: { text: "Ipk=" + fmtSI(I2pk, "A", 2), cls: ratingCls(I2pk, base.imaxL) },
+            RL: { text: "P=" + fmtSI(I2 * I2 * base.RL, "W", 2), cls: "ok" }
+        };
+        base.stressSS = stressSS;
+        base.ssStress = { I1: I1, I2: I2, VC1: VC1, VC2: VC2, VL1: VL1, VL2: VL2 };
+
+        var rows = [
+            ["Primary resonant capacitor", "C1", fmtSI(base.C1, "F", 4), "Series with L1 · Vpk " + fmtSI(VC1pk, "V", 1)],
+            ["Secondary resonant capacitor", "C2", fmtSI(base.C2, "F", 4), "Series with L2 / R_L · Vpk " + fmtSI(VC2pk, "V", 1)],
+            ["Input resistance after resonance", "R_in", fmtSI(base.ssRin, "Ω", 4), "Target R_s = " + fmtSI(base.Rs, "Ω", 2)],
+            ["Resistance mismatch", "—", pct(base.ssMismatch), "Tolerance " + pct(tol)],
+            ["Link efficiency (coils only)", "η", pct(base.efficiency), "ESR included, match lossless"],
+            ["Total efficiency (with match Q)", "η_tot", pct(base.effTotal), "Includes matching Q loss"]
+        ];
+
+        var math =
+            "Series-Series resonance:\n" +
+            "  C1 = 1 / (ω²L1) = " + fmtSI(base.C1, "F", 4) + "\n" +
+            "  C2 = 1 / (ω²L2) = " + fmtSI(base.C2, "F", 4) + "\n\n" +
+            "Reflected resistance:\n" +
+            "  R_sec = R2 + R_L = " + fmtSI(base.Rsec, "Ω", 4) + "\n" +
+            "  R_ref = (ωM)² / R_sec = " + fmtSI(base.R_ref, "Ω", 4) + "\n\n" +
+            "Input resistance:\n" +
+            "  R_in = R1 + R_ref = " + fmtSI(base.ssRin, "Ω", 4) + "\n" +
+            "  Target R_s = " + fmtSI(base.Rs, "Ω", 4) + "\n" +
+            "  Mismatch = " + pct(base.ssMismatch) + "\n\n" +
+            "Link efficiency:\n" +
+            "  η = [R_ref · R_L/(R2+R_L)] / (R1 + R_ref) ≈ " + pct(base.efficiency) + "\n\n" +
+            "With matching Q (C1 ESR):\n" +
+            "  ESR_C1 = X_C1 / Q_C = " + fmtSI(base.rC1, "Ω", 4) + "\n" +
+            "  η_match ≈ R_in / (R_in + ESR_C1) = " + pct(base.effMatchSS) + "\n" +
+            "  η_tot = η · η_match = " + pct(base.effTotal) + "\n\n" +
+            "Stress (rms → peak):\n" +
+            "  I1 = Vs/(R_s+R_p) = " + fmtSI(I1, "A", 3) + " rms · Ipk = " + fmtSI(I1pk, "A", 3) + "\n" +
+            "  I2 = ωM·I1/R_sec = " + fmtSI(I2, "A", 3) + " rms · Ipk = " + fmtSI(I2pk, "A", 3) + "\n" +
+            "  V_C2 = I2·X_C2 = " + fmtSI(VC2, "V", 2) + " rms · Vpk = " + fmtSI(VC2pk, "V", 2);
+
+        return {
+            name: t("nameSS"), badge: t("badgeSS"), mismatch: base.ssMismatch, q: 0,
+            reason: reason, svg: svgSS(base, stressSS), table: renderTable(rows), math: math,
+            effMatch: base.effMatchSS,
+            effTotal: base.effTotal,
+            stress: base.ssStress
+        };
+    }
+
+    function makeExact(base, cand) {
+        var series = seriesComponent(cand.Xs, base.w);
+        var shunt = shuntComponent(cand.B, base.w);
+        var Zin = zinExact(cand, base.Rp, base.XL1);
+        var mismatch = Math.hypot(Zin.re - base.Rs, Zin.im) / base.Rs;
+
+        var qSer = series.kind === "L" ? base.qL : base.qC;
+        var qSh = shunt.kind === "L" ? base.qL : base.qC;
+        var rSer = seriesLossR(series, qSer);
+        var rSh = 0;
+        if (shunt.kind !== "open" && cand.B !== 0) {
+            rSh = qSh / Math.abs(cand.B); // Rp = Q·|X| = Q/|B|
+        }
+
+        // Power flow with element loss (rms source)
+        // Zcoil = Rp + j XL1 (secondary resonant)
+        var Zcoil = { re: base.Rp, im: base.XL1 };
+        var ZserTot = CZ.add(Zcoil, { re: rSer, im: cand.Xs });
+        var ZinL, I1, Ish, Iin, Vsh;
+        if (cand.orientation === "A") {
+            // shunt (Rp || jB) at inverter side, then series+coil
+            var Ysh = { re: rSh > 0 ? 1 / rSh : 0, im: cand.B };
+            var Yin = CZ.add(Ysh, CZ.inv(ZserTot));
+            ZinL = CZ.inv(Yin);
+            var Ztot = { re: base.Rs + ZinL.re, im: ZinL.im };
+            var Is = CZ.div({ re: base.Vs, im: 0 }, Ztot);
+            Iin = CZ.mag(Is);
+            Vsh = CZ.mag(CZ.mul(Is, ZinL));
+            Ish = rSh > 0 || cand.B !== 0 ? Vsh * CZ.mag(Ysh) : 0;
+            // series branch current = coil current
+            I1 = Vsh / CZ.mag(ZserTot);
+        } else {
+            // series first, then shunt || coil
+            var Yload = CZ.inv(Zcoil);
+            var Ysh2 = { re: rSh > 0 ? 1 / rSh : 0, im: cand.B };
+            var Ytot = CZ.add(Yload, Ysh2);
+            ZinL = CZ.add({ re: rSer, im: cand.Xs }, CZ.inv(Ytot));
+            var Ztot2 = { re: base.Rs + ZinL.re, im: ZinL.im };
+            var Is2 = CZ.div({ re: base.Vs, im: 0 }, Ztot2);
+            Iin = CZ.mag(Is2);
+            // voltage after series element across shunt||coil
+            Vsh = Iin * CZ.mag(CZ.inv(Ytot));
+            I1 = Vsh / CZ.mag(Zcoil);
+            Ish = Vsh * CZ.mag(Ysh2);
+        }
+
+        var I2 = (base.XM * I1) / base.Rsec;
+        var VL1 = I1 * base.XL1;
+        var VL2 = I2 * base.XL2;
+        var VC2 = I2 * (1 / (base.w * base.C2));
+
+        // Orientation A: series element is in the coil branch → current is I1.
+        // Orientation B: series element is in the source path → current is Iin.
+        var Iser = (cand.orientation === "A") ? I1 : Iin;
+        var Vser = Iser * Math.abs(cand.Xs);
+        var Pin = Iin * Iin * ZinL.re; // power into matching network (excludes Rs)
+        var pLossSer = Iser * Iser * rSer;
+        var pLossSh = rSh > 0 ? (Vsh * Vsh) / rSh : 0;
+        var effMatch = Pin > 0 ? Math.max(0, Math.min(1, (Pin - pLossSer - pLossSh) / Pin)) : 1;
+        var effTotal = base.efficiency * effMatch;
+
+        var I1pk = peak(I1), I2pk = peak(I2);
+        var VserPk = peak(Vser), VshPk = peak(Vsh), VC2pk = peak(VC2);
+
+        var orient = cand.orientation === "A"
+            ? "shunt at the inverter side, series element before the coil"
+            : "series element first, shunt at the coil side";
+
+        var reason = "SS gives " + pct(base.ssMismatch) + " mismatch. This L-match transforms R_p = " +
+            fmtSI(base.Rp, "Ω", 3) + " to R_s = " + fmtSI(base.Rs, "Ω", 3) + ". Orientation: " + orient +
+            ". Q_match = " + cand.q.toFixed(2) + ". Secondary stays series-resonant (reflected Z real).";
+
+        var stressObj = {
+            series: {
+                text: "Ipk=" + fmtSI(peak(Iser), "A", 2) + " Vpk=" + fmtSI(VserPk, "V", 1),
+                cls: (function () {
+                    var iCls = ratingCls(peak(Iser), base.imaxL);
+                    var vCls = ratingCls(VserPk, base.vmaxC);
+                    if (iCls === "fail" || vCls === "fail") return "fail";
+                    if (iCls === "warn" || vCls === "warn") return "warn";
+                    return "ok";
+                })()
+            },
+            shunt: {
+                text: "Vpk=" + fmtSI(VshPk, "V", 1),
+                cls: ratingCls(VshPk, base.vmaxC)
+            },
+            C2: {
+                text: "Vpk=" + fmtSI(VC2pk, "V", 1),
+                cls: ratingCls(VC2pk, base.vmaxC)
+            },
+            L1: {
+                text: "Ipk=" + fmtSI(I1pk, "A", 2),
+                cls: ratingCls(I1pk, base.imaxL)
+            },
+            L2: {
+                text: "Ipk=" + fmtSI(I2pk, "A", 2),
+                cls: ratingCls(I2pk, base.imaxL)
+            },
+            RL: {
+                text: "P=" + fmtSI(I2 * I2 * base.RL, "W", 2),
+                cls: "ok"
+            }
+        };
+
+        var svg = svgExact(base, shunt, series, cand.orientation, stressObj);
+
+        var rows = [
+            ["Secondary resonant capacitor", "C2", fmtSI(base.C2, "F", 4), "Series with L2 / R_L · Vpk " + fmtSI(VC2pk, "V", 1)],
+            [series.name, series.des, series.valueText, "X = " + fmtSI(cand.Xs, "Ω", 3) + " · ESR = " + fmtSI(rSer, "Ω", 3)],
+            [shunt.name, shunt.des, shunt.valueText, shunt.kind === "open" ? "B = 0 S" : "B = " + fmtSI(cand.B, "S", 3) + " · Rp = " + fmtSI(rSh, "Ω", 2)],
+            ["Verified input impedance", "Z_in", fmtZ(Zin), "Target " + fmtSI(base.Rs, "Ω", 2) + " + j0"],
+            ["Matching Q", "Q", cand.q.toFixed(2), "Lower is better"],
+            ["Match loss", "η_match", pct(effMatch), "Series ESR + shunt Rp"],
+            ["Link efficiency (coils)", "η", pct(base.efficiency), "Coil ESR included"],
+            ["Total efficiency", "η_tot", pct(effTotal), "η × η_match"]
+        ];
+
+        var math;
+        if (cand.orientation === "A") {
+            math =
+                "Secondary side:\n" +
+                "  R_sec = R2 + R_L = " + fmtSI(base.Rsec, "Ω", 4) + "\n" +
+                "  C2 = 1 / (ω²L2) = " + fmtSI(base.C2, "F", 4) + "\n" +
+                "  R_ref = (ωM)² / R_sec = " + fmtSI(base.R_ref, "Ω", 4) + "\n\n" +
+                "Primary coil equivalent:\n" +
+                "  R_p = R1 + R_ref = " + fmtSI(base.Rp, "Ω", 4) + "\n" +
+                "  X_L1 = ωL1 = " + fmtSI(base.XL1, "Ω", 4) + "\n\n" +
+                "Exact L-match (orientation A):\n" +
+                "  X_total = ±√[R_p(R_s − R_p)] = " + fmtSI(cand.Xtot, "Ω", 4) + "\n" +
+                "  X_series = X_total − X_L1 = " + fmtSI(cand.Xs, "Ω", 4) + "\n" +
+                "  B_shunt = X_total / (R_p R_s) = " + fmtSI(cand.B, "S", 4) + "\n\n" +
+                "Components:\n" +
+                "  " + series.name + " = " + series.valueText + "  (ESR = " + fmtSI(rSer, "Ω", 3) + ")\n" +
+                "  " + shunt.name + " = " + shunt.valueText + (shunt.kind === "open" ? "" : "  (Rp = " + fmtSI(rSh, "Ω", 2) + ")") + "\n\n" +
+                "Verification:\n" +
+                "  Z_in = " + fmtZ(Zin) + "\n" +
+                "  Target = " + fmtSI(base.Rs, "Ω", 4) + " + j0\n\n" +
+                "Power / stress (rms · peak):\n" +
+                "  I_in = " + fmtSI(Iin, "A", 3) + "  ·  I1 = " + fmtSI(I1, "A", 3) + " (Ipk " + fmtSI(I1pk, "A", 3) + ")\n" +
+                "  I_ser = " + fmtSI(Iser, "A", 3) + "  ·  V_ser = " + fmtSI(Vser, "V", 2) + "\n" +
+                "  V_sh = " + fmtSI(Vsh, "V", 2) + "\n" +
+                "  V_C2 = " + fmtSI(VC2, "V", 2) + "  ·  Vpk_C2 = " + fmtSI(VC2pk, "V", 2) + "\n\n" +
+                "Efficiency:\n" +
+                "  η_match = " + pct(effMatch) + "\n" +
+                "  η_tot = " + pct(effTotal);
+        } else {
+            math =
+                "Secondary side:\n" +
+                "  R_sec = R2 + R_L = " + fmtSI(base.Rsec, "Ω", 4) + "\n" +
+                "  C2 = 1 / (ω²L2) = " + fmtSI(base.C2, "F", 4) + "\n" +
+                "  R_ref = (ωM)² / R_sec = " + fmtSI(base.R_ref, "Ω", 4) + "\n\n" +
+                "Primary coil equivalent:\n" +
+                "  R_p = R1 + R_ref = " + fmtSI(base.Rp, "Ω", 4) + "\n" +
+                "  X_L1 = ωL1 = " + fmtSI(base.XL1, "Ω", 4) + "\n\n" +
+                "Load admittance:\n" +
+                "  Y_load = 1 / (R_p + jX_L1)\n" +
+                "  G = " + fmtSI(cand.G, "S", 4) + ",  B_load = " + fmtSI(cand.Bload, "S", 4) + "\n\n" +
+                "Exact L-match (orientation B):\n" +
+                "  B_total = ±√(G/R_s − G²) = " + fmtSI(cand.Btot, "S", 4) + "\n" +
+                "  X_series = B_total R_s / G = " + fmtSI(cand.Xs, "Ω", 4) + "\n" +
+                "  B_shunt = B_total − B_load = " + fmtSI(cand.B, "S", 4) + "\n\n" +
+                "Components:\n" +
+                "  " + series.name + " = " + series.valueText + "  (ESR = " + fmtSI(rSer, "Ω", 3) + ")\n" +
+                "  " + shunt.name + " = " + shunt.valueText + (shunt.kind === "open" ? "" : "  (Rp = " + fmtSI(rSh, "Ω", 2) + ")") + "\n\n" +
+                "Verification:\n" +
+                "  Z_in = " + fmtZ(Zin) + "\n" +
+                "  Target = " + fmtSI(base.Rs, "Ω", 4) + " + j0\n\n" +
+                "Power / stress (rms · peak):\n" +
+                "  I_in = " + fmtSI(Iin, "A", 3) + "  ·  I1 = " + fmtSI(I1, "A", 3) + " (Ipk " + fmtSI(I1pk, "A", 3) + ")\n" +
+                "  I_ser = " + fmtSI(Iser, "A", 3) + "  ·  V_ser = " + fmtSI(Vser, "V", 2) + "\n" +
+                "  V_sh = " + fmtSI(Vsh, "V", 2) + "\n" +
+                "  V_C2 = " + fmtSI(VC2, "V", 2) + "  ·  Vpk_C2 = " + fmtSI(VC2pk, "V", 2) + "\n\n" +
+                "Efficiency:\n" +
+                "  η_match = " + pct(effMatch) + "\n" +
+                "  η_tot = " + pct(effTotal);
+        }
+
+        return {
+            name: cand.orientation === "A" ? t("nameExactA") : t("nameExactB"),
+            badge: t("badgeExact"),
+            mismatch: mismatch,
+            q: cand.q,
+            reason: reason,
+            svg: svg,
+            table: renderTable(rows),
+            math: math,
+            effMatch: effMatch,
+            effTotal: effTotal,
+            rSer: rSer,
+            rSh: rSh,
+            series: series,
+            shunt: shunt,
+            stress: { I1: I1, I2: I2, VL1: VL1, VL2: VL2, VC2: VC2, Vser: Vser, Ish: Ish, Vsh: Vsh, Iin: Iin }
+        };
+    }
+
+    /* ---------- rendering ---------- */
+
+    function renderTopologyCard(id, title, topo, altBadge) {
+        var el = $(id);
+        if (!topo) { el.style.display = "none"; el.innerHTML = ""; return; }
+        el.style.display = "block";
+        el.innerHTML =
+            '<div class="card-head">' + title + '</div>' +
+            '<div class="card-body">' +
+                '<div style="margin:6px 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+                '<span class="badge' + (altBadge ? " alt" : "") + '">' + topo.badge + '</span>' +
+                '<span style="color:var(--muted);">' + topo.name + '</span></div>' +
+                '<div class="alert alert-info">' + topo.reason + '</div>' +
+                '<div class="svg-wrap">' + topo.svg + '</div>' +
+                '<div class="legend">' + t("legendSvg") + '</div>' +
+                '<div class="subhead">' + t("subValues") + '</div>' + topo.table +
+                '<div class="subhead">' + t("subDeriv") + '</div>' +
+                '<div class="math-block">' + topo.math + '</div>' +
+            '</div>';
+    }
+
+    function showFatal(msg) {
+        banner(msg);
+        $("status-output").innerHTML = '<div class="alert alert-warning">' + msg + '</div>';
+        $("analysis-output").innerHTML = "";
+        $("stress-output").innerHTML = "";
+        $("decision-output").innerHTML = "";
+        $("recommended-card").style.display = "none";
+        $("alternative-card").style.display = "none";
+    }
+
+    /* ---------- bandwidth estimate ---------- */
+
+    function estimateBandwidth(base, cand, qMatch, matchParts) {
+        // Secondary resonance BW: f0 / Q_sec
+        var Qsec = base.XL2 / Math.max(base.Rsec, 1e-12);
+        var bwSec = base.f / Math.max(Qsec, 1e-9);
+        var Qload = qMatch > 0 ? qMatch : Qsec;
+        var bwPrim = base.f / Math.max(Qload, 1e-9);
+        var bw = Math.min(bwSec, bwPrim);
+
+        // Sweep with physical matching elements (and SS C1 if present)
+        var pts = Math.min(Math.max(Math.round(base.bwPoints || 9), 3), 21);
+        var span = Math.max(bw * 1.5, base.f * 0.02);
+        var sweep = [];
+        for (var i = 0; i < pts; i++) {
+            var fr = base.f - span + (2 * span) * (i / (pts - 1));
+            if (fr <= 0) continue;
+            var wr = 2 * Math.PI * fr;
+            var X2 = wr * base.L2 - 1 / (wr * base.C2);
+            var Zsec = { re: base.Rsec, im: X2 };
+            var Zref = CZ.div({ re: wr * wr * base.M * base.M, im: 0 }, Zsec);
+            var Zcoil = CZ.add({ re: base.R1, im: wr * base.L1 }, Zref);
+            var Zin;
+            if (matchParts && matchParts.mode === "exact") {
+                var series = matchParts.series, shunt = matchParts.shunt;
+                var Xser = 0;
+                if (series && series.kind === "L") Xser = wr * series.value;
+                else if (series && series.kind === "C") Xser = -1 / (wr * series.value);
+                var Bsh = 0;
+                if (shunt && shunt.kind === "C") Bsh = wr * shunt.value;
+                else if (shunt && shunt.kind === "L") Bsh = -1 / (wr * shunt.value);
+                var Zser = CZ.add(Zcoil, { re: 0, im: Xser });
+                if (matchParts.orientation === "A") {
+                    var Yin = CZ.add({ re: 0, im: Bsh }, CZ.inv(Zser));
+                    Zin = CZ.inv(Yin);
+                } else {
+                    var Yload = CZ.inv(Zcoil);
+                    var Ytot = CZ.add(Yload, { re: 0, im: Bsh });
+                    Zin = CZ.add({ re: 0, im: Xser }, CZ.inv(Ytot));
+                }
+            } else {
+                // SS: series C1 on primary
+                var X1r = wr * base.L1 - 1 / (wr * base.C1);
+                Zin = CZ.add({ re: base.R1, im: X1r }, Zref);
+            }
+            var Ztot = CZ.add({ re: base.Rs, im: 0 }, Zin);
+            var Is = CZ.mag(CZ.div({ re: base.Vs, im: 0 }, Ztot));
+            // Coil primary current through the matching network (not simply |Is|).
+            var I1f;
+            if (matchParts && matchParts.mode === "exact") {
+                var rSe = 0, rSh0 = 0;
+                if (series && (series.kind === "L" || series.kind === "C") && series.x) {
+                    var qSe = series.kind === "L" ? base.qL : base.qC;
+                    rSe = Math.abs(series.x) / (qSe > 0 ? qSe : 1e9);
+                }
+                if (shunt && shunt.kind !== "open" && shunt.b) {
+                    var qSh0 = shunt.kind === "L" ? base.qL : base.qC;
+                    rSh0 = (qSh0 > 0 ? qSh0 : 1e9) / Math.abs(shunt.b);
+                }
+                var ZcoilF = Zcoil;
+                if (matchParts.orientation === "A") {
+                    // shunt at source side, then series+coil
+                    var ZserF = CZ.add(ZcoilF, { re: rSe, im: Xser });
+                    var YshF = { re: rSh0 > 0 ? 1 / rSh0 : 0, im: Bsh };
+                    var YinF = CZ.add(YshF, CZ.inv(ZserF));
+                    var ZinLF = CZ.inv(YinF);
+                    var IsF = CZ.div({ re: base.Vs, im: 0 }, CZ.add({ re: base.Rs, im: 0 }, ZinLF));
+                    var VshF = CZ.mag(CZ.mul(IsF, ZinLF));
+                    I1f = VshF / CZ.mag(ZserF);
+                } else {
+                    // series first, then shunt || coil
+                    var YloadF = CZ.inv(ZcoilF);
+                    var YshF2 = { re: rSh0 > 0 ? 1 / rSh0 : 0, im: Bsh };
+                    var YtotF = CZ.add(YloadF, YshF2);
+                    var ZinLF2 = CZ.add({ re: rSe, im: Xser }, CZ.inv(YtotF));
+                    var IsF2 = CZ.mag(CZ.div({ re: base.Vs, im: 0 }, CZ.add({ re: base.Rs, im: 0 }, ZinLF2)));
+                    var VshF2 = IsF2 * CZ.mag(CZ.inv(YtotF));
+                    I1f = VshF2 / CZ.mag(ZcoilF);
+                }
+            } else {
+                // SS: series path current is |Is|
+                I1f = Is;
+            }
+            var I2f = (wr * base.M * I1f) / CZ.mag(Zsec);
+            var Pl = I2f * I2f * base.RL;
+            sweep.push({ f: fr, p: Pl });
+        }
+
+        var p0 = 0;
+        sweep.forEach(function (pt) {
+            if (Math.abs(pt.f - base.f) < span / (pts * 2) || pt.f === base.f) p0 = Math.max(p0, pt.p);
+        });
+        if (!p0) {
+            var best = sweep[0] || { p: 0 };
+            sweep.forEach(function (pt) {
+                if (Math.abs(pt.f - base.f) < Math.abs(best.f - base.f)) best = pt;
+            });
+            p0 = best.p;
+        }
+        return {
+            Qsec: Qsec,
+            bwSec: bwSec,
+            bwPrim: bwPrim,
+            bw: bw,
+            f0: base.f,
+            sweep: sweep,
+            p0: p0
+        };
+    }
+
+    function renderStress(base, bw, recommended) {
+        var st = recommended && recommended.stress ? recommended.stress : null;
+        var html = "";
+        var I1 = st ? st.I1 : (base.Vs / Math.max(base.Rs + base.Rp, 1e-9));
+        var I2 = st ? st.I2 : ((base.XM * I1) / base.Rsec);
+        var VC2 = st ? st.VC2 : (I2 / (base.w * base.C2));
+        var VL1 = st ? st.VL1 : (I1 * base.XL1);
+        var VL2 = st ? st.VL2 : (I2 * base.XL2);
+        var Vser = st && isFinite(st.Vser) ? st.Vser : null;
+        var Vsh = st && isFinite(st.Vsh) ? st.Vsh : null;
+
+        var I1pk = peak(I1), I2pk = peak(I2);
+        var VC2pk = peak(VC2), VL1pk = peak(VL1), VL2pk = peak(VL2);
+
+        html += '<div class="result-grid">' +
+            resultItem(t("lI1"), fmtSI(I1, "A", 3) + " · " + fmtSI(I1pk, "A", 3), ratingCls(I1pk, base.imaxL)) +
+            resultItem(t("lI2"), fmtSI(I2, "A", 3) + " · " + fmtSI(I2pk, "A", 3), ratingCls(I2pk, base.imaxL)) +
+            resultItem(t("lVC2"), fmtSI(VC2, "V", 1) + " · " + fmtSI(VC2pk, "V", 1), ratingCls(VC2pk, base.vmaxC)) +
+            resultItem(t("lVL1"), fmtSI(VL1, "V", 1) + " · " + fmtSI(VL1pk, "V", 1), ratingCls(VL1pk, base.vmaxC * 2)) +
+            resultItem(t("lVL2"), fmtSI(VL2, "V", 1) + " · " + fmtSI(VL2pk, "V", 1), ratingCls(VL2pk, base.vmaxC * 2)) +
+            (Vser !== null
+                ? resultItem(t("lVser"), fmtSI(peak(Vser), "V", 1), ratingCls(peak(Vser), base.vmaxC))
+                : resultItem("V on C1 (pk)", fmtSI(peak(I1 / (base.w * base.C1)), "V", 1), ratingCls(peak(I1 / (base.w * base.C1)), base.vmaxC))) +
+            (Vsh !== null ? resultItem(t("lVsh"), fmtSI(peak(Vsh), "V", 1), ratingCls(peak(Vsh), base.vmaxC)) : "") +
+            resultItem(t("lLimits"), fmtSI(base.imaxL, "A", 2) + " pk · " + fmtSI(base.vmaxC, "V", 1) + " pk", "") +
+            '</div>';
+
+        html += '<div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:8px;">';
+        html += I1pk <= base.imaxL
+            ? '<span class="badge stress-ok">' + t("badgeI1ok") + '</span>'
+            : '<span class="badge stress-fail">' + t("badgeI1fail") + '</span>';
+        html += I2pk <= base.imaxL
+            ? '<span class="badge stress-ok">' + t("badgeI2ok") + '</span>'
+            : '<span class="badge stress-fail">' + t("badgeI2fail") + '</span>';
+        html += VC2pk <= base.vmaxC
+            ? '<span class="badge stress-ok">' + t("badgeC2ok") + '</span>'
+            : (VC2pk <= base.vmaxC * 1.15 ? '<span class="badge stress-warn">' + t("badgeC2warn") + '</span>' : '<span class="badge stress-fail">' + t("badgeC2fail") + '</span>');
+        html += '</div>';
+
+        html += '<div class="subhead">' + t("subBw") + '</div>';
+        html += '<div class="result-grid">' +
+            resultItem(t("lQsec"), isFinite(bw.Qsec) ? bw.Qsec.toFixed(2) : "—") +
+            resultItem(t("lF0"), fmtSI(bw.f0, "Hz", 3)) +
+            resultItem(t("lBwSec"), fmtSI(bw.bwSec, "Hz", 3)) +
+            resultItem(t("lBwMatch"), fmtSI(bw.bwPrim, "Hz", 3)) +
+            resultItem(t("lBwUse"), fmtSI(bw.bw, "Hz", 3), "ok") +
+            resultItem(t("lBwRatio"), pct(bw.bw / Math.max(bw.f0, 1))) +
+            '</div>';
+
+        if (bw.sweep && bw.sweep.length > 1) {
+            var maxP = 0;
+            bw.sweep.forEach(function (pt) { if (pt.p > maxP) maxP = pt.p; });
+            var bars = "";
+            bw.sweep.forEach(function (pt) {
+                var h = maxP > 0 ? Math.round(40 * (pt.p / maxP)) : 0;
+                var mid = Math.abs(pt.f - bw.f0) < (bw.bw / 2);
+                bars += '<div style="width:10px;height:48px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;" title="' +
+                    fmtSI(pt.f, "Hz", 3) + " · " + fmtSI(pt.p, "W", 3) + '">' +
+                    '<div style="width:8px;height:' + Math.max(h, 2) + 'px;background:' +
+                    (mid ? "var(--ok)" : "var(--orange-deep)") + ';border-radius:2px;"></div></div>';
+            });
+            html += '<div class="subhead">' + t("subPwr") + '</div>' +
+                '<div style="display:flex;gap:4px;align-items:flex-end;padding:8px;background:#000;border:1px solid var(--line);border-radius:8px;overflow-x:auto;">' +
+                bars + '</div>' +
+                '<div class="legend">' + t("legendSweep") + '</div>';
+        }
+
+        $("stress-output").innerHTML = html;
+    }
+
+    /* ---------- main calculation ---------- */
+
+    var lastCalc = null;
+
+    function calculate() {
+        hideBanner();
+        try {
+            var f = getNum("freq") * 1e3;
+            var L1 = getNum("l1") * 1e-6;
+            var L2 = getNum("l2") * 1e-6;
+            var R1 = getNum("r1");
+            var R2 = getNum("r2");
+            var Rs = getNum("rs");
+            var RL = getNum("rl");
+            var Vs = getNum("vs");
+            var qL = getNum("qL");
+            var qC = getNum("qC");
+            var vmaxC = getNum("vmaxC");
+            var imaxL = getNum("imaxL");
+            var tolPct = getNum("tolerance");
+            var maxQin = getNum("maxQ");
+            var bwPoints = getNum("bwPoints");
+            var tol = (isFinite(tolPct) ? tolPct : 5) / 100;
+            var maxQ = isFinite(maxQin) ? maxQin : 10;
+
+            if (!isFinite(f) || f <= 0) throw new Error("Frequency must be greater than 0.");
+            if (!isFinite(L1) || L1 <= 0) throw new Error("L1 must be greater than 0.");
+            if (!isFinite(L2) || L2 <= 0) throw new Error("L2 must be greater than 0.");
+            if (!isFinite(R1) || R1 < 0) throw new Error("R1 must be 0 or positive.");
+            if (!isFinite(R2) || R2 < 0) throw new Error("R2 must be 0 or positive.");
+            if (!isFinite(Rs) || Rs <= 0) throw new Error("Source resistance must be greater than 0.");
+            if (!isFinite(RL) || RL <= 0) throw new Error("Load resistance must be greater than 0.");
+            if (!isFinite(Vs) || Vs <= 0) Vs = 1;
+            if (!isFinite(qL) || qL <= 0) qL = 80;
+            if (!isFinite(qC) || qC <= 0) qC = 500;
+            if (!isFinite(vmaxC) || vmaxC <= 0) vmaxC = 50;
+            if (!isFinite(imaxL) || imaxL <= 0) imaxL = 3;
+
+            var k = getNum("k");
+            var M = getNum("m");
+            var autoM = $("autoM").checked;
+
+            if (autoM) {
+                if (!isFinite(k) || k < 0) k = 0;
+                if (k > 1) k = 1;
+                M = k * Math.sqrt(L1 * L2);
+                $("m").value = (M * 1e6).toFixed(3);
+            } else if (!isFinite(M) || M <= 0) {
+                if (!isFinite(k) || k < 0) k = 0;
+                if (k > 1) k = 1;
+                M = k * Math.sqrt(L1 * L2);
+                $("m").value = (M * 1e6).toFixed(3);
+            } else {
+                k = M / Math.sqrt(L1 * L2);
+                $("k").value = k.toFixed(4);
+            }
+
+            var warnings = [];
+            if (k > 1) warnings.push("Computed k > 1 — not physically realizable for a passive two-coil system.");
+            if (M <= 0) warnings.push("Mutual inductance is zero — no power can be transferred.");
+
+            var w = 2 * Math.PI * f;
+            var XL1 = w * L1;
+            var XL2 = w * L2;
+            var XM = w * M;
+            var XC2 = 1 / (w * C2of(w, L2));
+
+            function C2of(w, L) { return 1 / (w * w * L); }
+
+            var Rsec = R2 + RL;
+            var R_ref = Rsec > 0 ? (XM * XM) / Rsec : 0;
+            var Rp = R1 + R_ref;
+            var C1 = 1 / (w * w * L1);
+            var C2 = 1 / (w * w * L2);
+            var ssRin = Rp;
+            var ssMismatch = Math.abs(ssRin - Rs) / Rs;
+            var efficiency = (R_ref > 0 && Rp > 0) ? (R_ref * (RL / Rsec)) / Rp : 0;
+
+            // SS match loss: C1 series ESR
+            var rC1 = XL1 > 0 ? (1 / (w * C1)) / qC : 0; // |X_C1| = XL1 at resonance
+            var effMatchSS = Rp > 0 ? Rp / (Rp + rC1) : 1;
+            var effTotalSS = efficiency * effMatchSS;
+
+            var ZinUncomp = CZ.add({ re: R1, im: XL1 }, CZ.div({ re: XM * XM, im: 0 }, { re: R2 + RL, im: XL2 }));
+
+            var base = {
+                f: f, w: w, L1: L1, L2: L2, k: k, M: M, R1: R1, R2: R2, Rs: Rs, RL: RL, Vs: Vs,
+                qL: qL, qC: qC, vmaxC: vmaxC, imaxL: imaxL, bwPoints: bwPoints,
+                Rsec: Rsec, R_ref: R_ref, Rp: Rp, XL1: XL1, XL2: XL2, XM: XM,
+                C1: C1, C2: C2, rC1: rC1,
+                efficiency: efficiency, ssRin: ssRin, ssMismatch: ssMismatch,
+                effMatchSS: effMatchSS, effTotal: effTotalSS
+            };
+
+            var ssTopo = makeSS(base, tol);
+            ssTopo.effTotal = effTotalSS;
+            ssTopo.effMatch = effMatchSS;
+
+            var cand = designExactMatch(Rs, Rp, XL1);
+            var exactTopo = cand ? makeExact(base, cand) : null;
+
+            if (exactTopo) {
+                base.effTotal = exactTopo.effTotal;
+                base.effMatchSS = effMatchSS;
+                if (exactTopo.q > maxQ) warnings.push("Matching Q = " + exactTopo.q.toFixed(2) + " exceeds max Q = " + maxQ + ". Consider higher M/k, a different load, or a multi-stage network.");
+                if (exactTopo.mismatch > 0.02) warnings.push("Numerical verification mismatch = " + pct(exactTopo.mismatch) + ". Check for extreme component values.");
+                if (exactTopo.effMatch < 0.9) warnings.push("Matching-element loss is significant (η_match = " + pct(exactTopo.effMatch) + "). Raise inductor/capacitor Q or reduce match Q.");
+            } else {
+                warnings.push("No lossless two-element exact match exists with a series-resonant secondary. Increase coupling/M or add another matching stage.");
+            }
+
+            var recommended, alternative;
+            if (!exactTopo) { recommended = ssTopo; alternative = null; }
+            else if (ssTopo.mismatch <= tol) { recommended = ssTopo; alternative = exactTopo; }
+            else { recommended = exactTopo; alternative = ssTopo; }
+
+            var qMatch = exactTopo ? exactTopo.q : (base.XL2 / Rsec);
+            var matchParts = null;
+            if (exactTopo && cand) {
+                matchParts = {
+                    mode: "exact",
+                    orientation: cand.orientation,
+                    series: exactTopo.series,
+                    shunt: exactTopo.shunt
+                };
+            }
+            var bw = estimateBandwidth(base, cand, qMatch, matchParts);
+
+            if (bw.bw < base.f * 0.01) {
+                warnings.push("Estimated usable bandwidth is under 1% of f\u2080. High-Q link — component drift and detuning will matter.");
+            }
+
+            $("status-output").innerHTML =
+                '<div class="alert alert-info"><strong>' + t("recTopo") + '</strong> ' + recommended.name + '</div>' +
+                '<div class="result-grid">' +
+                resultItem(t("lM"), fmtSI(base.M, "H", 3)) +
+                resultItem(t("lK"), isFinite(base.k) ? base.k.toFixed(3) : "—", "", true) +
+                resultItem(t("lXM"), fmtSI(base.XM, "Ω", 3), "", true) +
+                resultItem(t("lRref"), fmtSI(base.R_ref, "Ω", 3)) +
+                resultItem(t("lSsMis"), pct(base.ssMismatch)) +
+                resultItem(t("lExactQ"), exactTopo ? exactTopo.q.toFixed(2) : "—") +
+                resultItem(t("lLinkEff"), pct(base.efficiency), "", true) +
+                resultItem(t("lTotEff"), pct(recommended.effTotal !== undefined ? recommended.effTotal : base.effTotal), "ok", true) +
+                '</div>';
+
+            $("analysis-output").innerHTML =
+                '<div class="result-grid">' +
+                resultItem(t("lOmega"), fmtSI(base.w, "rad/s", 3), "", true) +
+                resultItem(t("lXL1"), fmtSI(base.XL1, "Ω", 3), "", true) +
+                resultItem(t("lXL2"), fmtSI(base.XL2, "Ω", 3), "", true) +
+                resultItem(t("lZinUncomp"), fmtZ(ZinUncomp)) +
+                resultItem(t("lZinMag"), fmtSI(CZ.mag(ZinUncomp), "Ω", 3)) +
+                resultItem(t("lRp"), fmtSI(base.Rp, "Ω", 3)) +
+                resultItem("C\u2081", fmtSI(base.C1, "F", 3)) +
+                resultItem("C\u2082", fmtSI(base.C2, "F", 3)) +
+                '</div>' +
+                '<div class="alert alert-info">' + t("noteResonance") + '</div>';
+
+            var dec = '<div class="alert alert-info">' + recommended.reason + '</div>' +
+                '<div class="result-grid">' +
+                resultItem(t("lSsRin"), fmtSI(base.ssRin, "Ω", 3)) +
+                resultItem(t("lSsMis"), pct(ssTopo.mismatch)) +
+                resultItem(t("lExactAvail"), exactTopo ? t("yes") : t("no")) +
+                resultItem(t("lExactQ2"), exactTopo ? exactTopo.q.toFixed(2) : "—") +
+                resultItem(t("lMatchEff"), pct(exactTopo ? exactTopo.effMatch : effMatchSS), "", true) +
+                resultItem(t("lRecommended"), recommended.name) +
+                '</div>';
+            warnings.forEach(function (wn) { dec += '<div class="alert alert-warning">' + wn + '</div>'; });
+            $("decision-output").innerHTML = dec;
+
+            renderTopologyCard("recommended-card", t("subRec"), recommended, false);
+            renderTopologyCard("alternative-card", t("subAlt"), alternative, true);
+
+            renderStress(base, bw, recommended.effMatch !== undefined ? recommended : null);
+
+            lastCalc = {
+                base: base,
+                recommended: recommended,
+                alternative: alternative,
+                exactTopo: exactTopo,
+                ssTopo: ssTopo,
+                bw: bw,
+                warnings: warnings
+            };
+
+        } catch (err) {
+            showFatal("Calculation error: " + err.message);
+        }
+    }
+
+    /* ---------- CSV export ---------- */
+
+    function exportCsv() {
+        if (!lastCalc) calculate();
+        if (!lastCalc) return;
+        var b = lastCalc.base;
+        var rec = lastCalc.recommended;
+        var rows = [
+            ["module", "type", "key", "value", "unit"],
+            ["MatchingNet", "meta", "title", "WPT Matching Network Designer", ""],
+            ["MatchingNet", "meta", "version", "V2.4", ""],
+            ["MatchingNet", "parameter", "frequency", b.f / 1e3, "kHz"],
+            ["MatchingNet", "parameter", "Vs", b.Vs, "V rms"],
+            ["MatchingNet", "parameter", "Rs", b.Rs, "ohm"],
+            ["MatchingNet", "parameter", "RL", b.RL, "ohm"],
+            ["MatchingNet", "parameter", "L1", b.L1 * 1e6, "uH"],
+            ["MatchingNet", "parameter", "L2", b.L2 * 1e6, "uH"],
+            ["MatchingNet", "parameter", "M", b.M * 1e6, "uH"],
+            ["MatchingNet", "parameter", "k", b.k, ""],
+            ["MatchingNet", "parameter", "R1", b.R1, "ohm"],
+            ["MatchingNet", "parameter", "R2", b.R2, "ohm"],
+            ["MatchingNet", "parameter", "Q_inductor", b.qL, ""],
+            ["MatchingNet", "parameter", "Q_capacitor", b.qC, ""],
+            ["MatchingNet", "parameter", "Vmax_cap", b.vmaxC, "V peak"],
+            ["MatchingNet", "parameter", "Imax_ind", b.imaxL, "A peak"],
+            ["MatchingNet", "result", "C1", b.C1 * 1e9, "nF"],
+            ["MatchingNet", "result", "C2", b.C2 * 1e9, "nF"],
+            ["MatchingNet", "result", "R_ref", b.R_ref, "ohm"],
+            ["MatchingNet", "result", "Rp", b.Rp, "ohm"],
+            ["MatchingNet", "result", "ss_mismatch", b.ssMismatch * 100, "%"],
+            ["MatchingNet", "result", "eta_link", b.efficiency * 100, "%"],
+            ["MatchingNet", "result", "eta_total", (rec && rec.effTotal !== undefined ? rec.effTotal : b.effTotal) * 100, "%"],
+            ["MatchingNet", "result", "recommended_topology", rec ? rec.name : "", ""],
+            ["MatchingNet", "result", "bandwidth", lastCalc.bw.bw, "Hz"],
+            ["MatchingNet", "result", "Q_secondary", lastCalc.bw.Qsec, ""]
+        ];
+        if (lastCalc.exactTopo) {
+            rows.push(["MatchingNet", "result", "match_Q", lastCalc.exactTopo.q, ""]);
+            rows.push(["MatchingNet", "result", "eta_match", lastCalc.exactTopo.effMatch * 100, "%"]);
+            if (lastCalc.exactTopo.series) {
+                rows.push(["MatchingNet", "component", "series_match", lastCalc.exactTopo.series.valueText, lastCalc.exactTopo.series.des]);
+            }
+            if (lastCalc.exactTopo.shunt && lastCalc.exactTopo.shunt.kind !== "open") {
+                rows.push(["MatchingNet", "component", "shunt_match", lastCalc.exactTopo.shunt.valueText, lastCalc.exactTopo.shunt.des]);
+            }
+        }
+        if (rec && rec.stress) {
+            var sp = rec.stress;
+            rows.push(["MatchingNet", "stress", "I1_rms", sp.I1, "A"]);
+            rows.push(["MatchingNet", "stress", "I1_peak", Math.abs(sp.I1) * Math.SQRT2, "A"]);
+            rows.push(["MatchingNet", "stress", "I2_rms", sp.I2, "A"]);
+            rows.push(["MatchingNet", "stress", "I2_peak", Math.abs(sp.I2) * Math.SQRT2, "A"]);
+            rows.push(["MatchingNet", "stress", "VC2_rms", sp.VC2, "V"]);
+            rows.push(["MatchingNet", "stress", "VC2_peak", Math.abs(sp.VC2) * Math.SQRT2, "V"]);
+        }
+        (lastCalc.warnings || []).forEach(function (wn, i) {
+            rows.push(["MatchingNet", "warning", "warning_" + (i + 1), wn, ""]);
+        });
+
+        var csv = rows.map(function (r) {
+            return r.map(function (c) {
+                var s = String(c == null ? "" : c);
+                return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+            }).join(",");
+        }).join("\n");
+
+        var name = window.prompt(t("csvPrompt"), "WPT-MatchingNet.csv");
+        if (!name) return;
+        var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name.toLowerCase().endsWith(".csv") ? name : name + ".csv";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            URL.revokeObjectURL(a.href);
+            a.remove();
+        }, 1000);
+    }
+
+    /* ---------- boot / live recalc ---------- */
+
+    var liveTimer = null;
+    function scheduleCalc() {
+        if (liveTimer) clearTimeout(liveTimer);
+        liveTimer = setTimeout(function () {
+            liveTimer = null;
+            calculate();
+        }, 180);
+    }
+
+    function openHelp() {
+        var m = $("helpModal");
+        if (!m) return;
+        var body = $("helpBody");
+        if (body) body.innerHTML = t("helpHtml");
+        m.classList.add("open");
+        var closeBtn = $("helpClose");
+        if (closeBtn) closeBtn.focus();
+    }
+
+    function closeHelp() {
+        var m = $("helpModal");
+        if (m) m.classList.remove("open");
+        var btn = $("helpBtn");
+        if (btn) btn.focus();
+    }
+
+    function setLang(code) {
+        if (code !== "en" && code !== "ru" && code !== "zh") code = "en";
+        LANG = code;
+        try { localStorage.setItem("mnLang", code); } catch (e) { }
+        applyI18n();
+        calculate();
+    }
+
+    function init() {
+        var btn = $("calcBtn");
+        if (!btn) { banner("Fatal: calculate button not found in DOM."); return; }
+        btn.addEventListener("click", calculate);
+
+        var exp = $("exportBtn");
+        if (exp) exp.addEventListener("click", exportCsv);
+
+        var helpBtn = $("helpBtn");
+        if (helpBtn) helpBtn.addEventListener("click", openHelp);
+        var helpClose = $("helpClose");
+        if (helpClose) helpClose.addEventListener("click", closeHelp);
+        var helpModal = $("helpModal");
+        if (helpModal) {
+            helpModal.addEventListener("click", function (e) {
+                if (e.target === helpModal) closeHelp();
+            });
+        }
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                var m = $("helpModal");
+                if (m && m.classList.contains("open")) closeHelp();
+            }
+        });
+
+        var langSel = $("langSel");
+        if (langSel) {
+            langSel.value = LANG;
+            langSel.addEventListener("change", function () {
+                setLang(langSel.value);
+            });
+        }
+
+        applyI18n();
+
+        var inputs = document.querySelectorAll("input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].addEventListener("keydown", function (e) {
+                if (e.key === "Enter") calculate();
+            });
+            inputs[i].addEventListener("input", scheduleCalc);
+            inputs[i].addEventListener("change", scheduleCalc);
+        }
+
+        calculate();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+})();
+</script>
+
+<div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal">
+        <div class="modal-head">
+            <span id="helpTitle" data-i18n="helpTitle">User Manual</span>
+            <button type="button" class="secondary" id="helpClose" data-i18n="btnClose">Close</button>
+        </div>
+        <div class="modal-body" id="helpBody"></div>
+    </div>
+</div>
+</body>
+</html>
